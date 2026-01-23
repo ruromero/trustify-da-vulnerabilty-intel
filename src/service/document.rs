@@ -8,6 +8,7 @@ use crate::db::repository::ReferenceDocumentRepository;
 use crate::db::DbError;
 use crate::model::{ReferenceDocument, RetrieverConfig};
 use crate::retriever::{RetrieverDispatcher, RetrieverError};
+use crate::service::cache::VulnerabilityCache;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DocumentServiceError {
@@ -25,10 +26,14 @@ pub struct DocumentService {
 }
 
 impl DocumentService {
-    pub fn new(repository: ReferenceDocumentRepository, retriever_config: RetrieverConfig) -> Self {
+    pub fn new(
+        repository: ReferenceDocumentRepository,
+        retriever_config: RetrieverConfig,
+        cache: Option<VulnerabilityCache>,
+    ) -> Self {
         Self {
             repository,
-            dispatcher: RetrieverDispatcher::new(retriever_config),
+            dispatcher: RetrieverDispatcher::new(retriever_config, cache),
         }
     }
 

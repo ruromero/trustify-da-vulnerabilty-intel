@@ -52,16 +52,24 @@ async fn main() -> std::io::Result<()> {
     // Create services
     let document_repository = ReferenceDocumentRepository::new(db_pool.clone());
     let retriever_config = config.retrievers.clone();
-    let document_service = DocumentService::new(document_repository.clone(), retriever_config.clone());
+    let document_service = DocumentService::new(
+        document_repository.clone(),
+        retriever_config.clone(),
+        cache.clone(),
+    );
 
     let vulnerability_service = web::Data::new(VulnerabilityService::new(
         OsvClient::new(),
         DepsDevClient::new(),
         document_service,
-        cache,
+        cache.clone(),
     ));
 
-    let document_service_data = web::Data::new(DocumentService::new(document_repository, retriever_config));
+    let document_service_data = web::Data::new(DocumentService::new(
+        document_repository,
+        retriever_config,
+        cache,
+    ));
 
     tracing::info!("Starting Trustify DA Agents server on {}", bind_addr);
 

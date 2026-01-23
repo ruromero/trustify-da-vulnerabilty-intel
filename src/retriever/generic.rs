@@ -280,6 +280,7 @@ impl DocumentRetriever for GenericWebRetriever {
                         repository: None,
                         file_changes: vec![],
                         code_snippets: vec![],
+                        comments: vec![],
                     },
                 )
             } else if content_type_header.contains("text/markdown") {
@@ -297,6 +298,7 @@ impl DocumentRetriever for GenericWebRetriever {
                         repository: None,
                         file_changes: vec![],
                         code_snippets: vec![],
+                        comments: vec![],
                     },
                 )
             } else {
@@ -326,6 +328,7 @@ impl DocumentRetriever for GenericWebRetriever {
                         repository: None,
                         file_changes: vec![],
                         code_snippets,
+                        comments: vec![],
                     },
                 )
             };

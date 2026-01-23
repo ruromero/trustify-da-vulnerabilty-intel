@@ -168,6 +168,7 @@ impl DocumentRetriever for GitHubReleaseRetriever {
                 repository: Url::parse(&format!("https://github.com/{}/{}", owner, repo)).ok(),
                 file_changes: vec![],
                 code_snippets: vec![],
+                comments: vec![],
             }),
         })
     }

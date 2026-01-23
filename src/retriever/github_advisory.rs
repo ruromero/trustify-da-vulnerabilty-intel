@@ -180,6 +180,7 @@ impl GitHubAdvisoryRetriever {
                 repository: None,
                 file_changes: vec![],
                 code_snippets: vec![],
+                comments: vec![],
             }),
         })
     }
@@ -230,6 +231,7 @@ impl GitHubAdvisoryRetriever {
                 repository: None,
                 file_changes: vec![],
                 code_snippets: vec![],
+                comments: vec![],
             }),
         })
     }

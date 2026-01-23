@@ -1,5 +1,7 @@
 //! Document retrievers for fetching reference content from various sources
 
+mod bugzilla;
+mod cve_org;
 mod generic;
 mod github_advisory;
 mod github_commit;
@@ -7,6 +9,7 @@ mod github_cve;
 mod github_issue;
 mod github_release;
 mod nvd;
+mod redhat_csaf;
 
 use std::env;
 
@@ -16,7 +19,10 @@ use sha2::{Digest, Sha256};
 use url::Url;
 
 use crate::model::{ContentType, ReferenceDocument, ReferenceMetadata, RetrieverType};
+use crate::service::cache::VulnerabilityCache;
 
+pub use bugzilla::BugzillaRetriever;
+pub use cve_org::CveOrgRetriever;
 pub use generic::GenericWebRetriever;
 pub use github_advisory::GitHubAdvisoryRetriever;
 pub use github_commit::GitHubCommitRetriever;
@@ -24,6 +30,7 @@ pub use github_cve::GitHubCveRetriever;
 pub use github_issue::GitHubIssueRetriever;
 pub use github_release::GitHubReleaseRetriever;
 pub use nvd::NvdRetriever;
+pub use redhat_csaf::RedHatCsafRetriever;
 
 const ENV_GITHUB_TOKEN: &str = "GITHUB_TOKEN";
 
@@ -142,16 +149,19 @@ use crate::model::RetrieverConfig;
 pub struct RetrieverDispatcher {
     config: RetrieverConfig,
     nvd: NvdRetriever,
+    cve_org: CveOrgRetriever,
     github_cve: GitHubCveRetriever,
     github_advisory: GitHubAdvisoryRetriever,
     github_issue: GitHubIssueRetriever,
     github_commit: GitHubCommitRetriever,
     github_release: GitHubReleaseRetriever,
+    bugzilla: BugzillaRetriever,
+    redhat_csaf: RedHatCsafRetriever,
     generic: GenericWebRetriever,
 }
 
 impl RetrieverDispatcher {
-    pub fn new(config: RetrieverConfig) -> Self {
+    pub fn new(config: RetrieverConfig, cache: Option<VulnerabilityCache>) -> Self {
         let github_token = get_github_token();
 
         if !config.allow.is_empty() {
@@ -164,11 +174,14 @@ impl RetrieverDispatcher {
         Self {
             config,
             nvd: NvdRetriever::new(),
+            cve_org: CveOrgRetriever::new(),
             github_cve: GitHubCveRetriever::new(github_token.clone()),
             github_advisory: GitHubAdvisoryRetriever::new(github_token.clone()),
             github_issue: GitHubIssueRetriever::new(github_token.clone()),
             github_commit: GitHubCommitRetriever::new(github_token.clone()),
             github_release: GitHubReleaseRetriever::new(github_token),
+            bugzilla: BugzillaRetriever::new(),
+            redhat_csaf: RedHatCsafRetriever::new(cache),
             generic: GenericWebRetriever::new(),
         }
     }
@@ -184,6 +197,10 @@ impl RetrieverDispatcher {
         // Try retrievers in order of specificity
         if self.nvd.can_handle(url) {
             return self.nvd.retrieve(url).await;
+        }
+
+        if self.cve_org.can_handle(url) {
+            return self.cve_org.retrieve(url).await;
         }
 
         if self.github_cve.can_handle(url) {
@@ -204,6 +221,14 @@ impl RetrieverDispatcher {
 
         if self.github_issue.can_handle(url) {
             return self.github_issue.retrieve(url).await;
+        }
+
+        if self.bugzilla.can_handle(url) {
+            return self.bugzilla.retrieve(url).await;
+        }
+
+        if self.redhat_csaf.can_handle(url) {
+            return self.redhat_csaf.retrieve(url).await;
         }
 
         // Fallback to generic

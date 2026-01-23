@@ -186,6 +186,7 @@ impl DocumentRetriever for GitHubCveRetriever {
                 ),
                 file_changes: vec![],
                 code_snippets: vec![],
+                comments: vec![],
             }),
         })
     }

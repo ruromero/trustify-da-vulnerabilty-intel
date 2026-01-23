@@ -127,6 +127,7 @@ impl DocumentRetriever for NvdRetriever {
                 repository: None,
                 file_changes: vec![],
                 code_snippets: vec![],
+                comments: vec![],
             }),
         })
     }

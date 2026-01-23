@@ -207,6 +207,7 @@ impl GitHubCommitRetriever {
                 repository: Url::parse(&format!("https://github.com/{}/{}", owner, repo)).ok(),
                 file_changes,
                 code_snippets: vec![],
+                comments: vec![],
             }),
         })
     }

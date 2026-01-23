@@ -33,6 +33,7 @@ pub enum CacheError {
 // Cache key prefixes
 const PREFIX_VULNERABILITY: &str = "vuln:";
 const PREFIX_PACKAGE: &str = "pkg:";
+const PREFIX_CSAF: &str = "csaf:";
 
 /// Redis-based cache for vulnerability and package data
 #[derive(Clone)]
@@ -101,6 +102,16 @@ impl VulnerabilityCache {
     /// Cache package metadata by purl
     pub async fn set_package<T: Serialize>(&self, purl: &str, data: &T) -> Result<(), CacheError> {
         self.set_with_prefix(PREFIX_PACKAGE, purl, data).await
+    }
+
+    /// Get cached Red Hat CSAF data by CVE ID
+    pub async fn get_csaf<T: DeserializeOwned>(&self, cve: &str) -> Result<T, CacheError> {
+        self.get_with_prefix(PREFIX_CSAF, cve).await
+    }
+
+    /// Cache Red Hat CSAF data by CVE ID
+    pub async fn set_csaf<T: Serialize>(&self, cve: &str, data: &T) -> Result<(), CacheError> {
+        self.set_with_prefix(PREFIX_CSAF, cve, data).await
     }
 
     async fn get_with_prefix<T: DeserializeOwned>(&self, prefix: &str, key: &str) -> Result<T, CacheError> {

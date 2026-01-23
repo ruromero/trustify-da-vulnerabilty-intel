@@ -56,11 +56,14 @@ pub struct ReferenceDocument {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub enum RetrieverType {
     Nvd,
+    CveOrg,
     GitCveV5,
     GitAdvisory,
     GitIssue,
     GitCommit,
     GitRelease,
+    Bugzilla,
+    RedHatCsaf,
     Generic,
 }
 
@@ -76,6 +79,14 @@ pub struct ReferenceMetadata {
     pub repository: Option<Url>,
     pub file_changes: Vec<FileChange>,
     pub code_snippets: Vec<CodeSnippet>,
+    pub comments: Vec<Comment>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct Comment {
+    pub text: String,
+    pub author: Option<String>,
+    pub timestamp: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -358,6 +369,7 @@ pub struct VulnerabilityIntel {
     pub package_identity: PackageIdentity,
     pub affected_versions: Vec<AffectedRange>,
     pub fixed_versions: Vec<FixedRange>,
+    pub vendor_remediations: Vec<VendorRemediation>,
     pub exploitability: ExploitabilityAssessment,
     pub impact: ImpactAssessment,
     pub claims: Vec<SourceClaim>,
@@ -390,6 +402,26 @@ pub struct FixedRange {
     pub range_type: RangeType,
     pub fixed: Option<String>,
     pub raw: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct VendorRemediation {
+    pub vendor: String,
+    pub category: RemediationCategory,
+    pub other_category: Option<String>,
+    pub details: Option<String>,
+    pub url: Option<Url>,
+    pub product_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RemediationCategory {
+    VendorFix,
+    Workaround,
+    NoFixPlanned,
+    NoneAvailable,
+    Other,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

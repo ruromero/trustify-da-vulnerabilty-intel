@@ -182,6 +182,7 @@ impl GitHubIssueRetriever {
                 repository: Url::parse(&format!("https://github.com/{}/{}", owner, repo)).ok(),
                 file_changes: vec![],
                 code_snippets: vec![],
+                comments: vec![],
             }),
         })
     }
@@ -238,6 +239,7 @@ impl GitHubIssueRetriever {
                 repository: Url::parse(&format!("https://github.com/{}/{}", owner, repo)).ok(),
                 file_changes: vec![],
                 code_snippets: vec![],
+                comments: vec![],
             }),
         })
     }

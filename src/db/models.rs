@@ -33,11 +33,14 @@ impl ReferenceDocumentRow {
 
         let retriever = match self.retriever_type.as_str() {
             "nvd" => RetrieverType::Nvd,
+            "cve_org" => RetrieverType::CveOrg,
             "git_cve_v5" => RetrieverType::GitCveV5,
             "git_advisory" => RetrieverType::GitAdvisory,
             "git_issue" => RetrieverType::GitIssue,
             "git_commit" => RetrieverType::GitCommit,
             "git_release" => RetrieverType::GitRelease,
+            "bugzilla" => RetrieverType::Bugzilla,
+            "redhat_csaf" => RetrieverType::RedHatCsaf,
             _ => RetrieverType::Generic,
         };
 
@@ -74,11 +77,14 @@ impl ReferenceDocumentRow {
 pub fn retriever_type_to_string(retriever: &RetrieverType) -> &'static str {
     match retriever {
         RetrieverType::Nvd => "nvd",
+        RetrieverType::CveOrg => "cve_org",
         RetrieverType::GitCveV5 => "git_cve_v5",
         RetrieverType::GitAdvisory => "git_advisory",
         RetrieverType::GitIssue => "git_issue",
         RetrieverType::GitCommit => "git_commit",
         RetrieverType::GitRelease => "git_release",
+        RetrieverType::Bugzilla => "bugzilla",
+        RetrieverType::RedHatCsaf => "redhat_csaf",
         RetrieverType::Generic => "generic",
     }
 }

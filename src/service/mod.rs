@@ -2,6 +2,7 @@ pub mod cache;
 pub mod depsdev;
 pub mod document;
 pub mod osv;
+pub mod redhat_csaf;
 pub mod vulnerability;
 
 pub use cache::VulnerabilityCache;
