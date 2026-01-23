@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use actix_web::{App, HttpServer, web};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -9,7 +11,10 @@ mod service;
 
 use db::repository::ReferenceDocumentRepository;
 use model::Config;
-use service::{DepsDevClient, DocumentService, OsvClient, VulnerabilityCache, VulnerabilityService};
+use service::{
+    ClaimExtractionService, DepsDevClient, DocumentService, OsvClient, VulnerabilityCache,
+    VulnerabilityService,
+};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -52,24 +57,29 @@ async fn main() -> std::io::Result<()> {
     // Create services
     let document_repository = ReferenceDocumentRepository::new(db_pool.clone());
     let retriever_config = config.retrievers.clone();
-    let document_service = DocumentService::new(
-        document_repository.clone(),
-        retriever_config.clone(),
+
+    // Create shared document service (used by claim extraction and API)
+    let document_service = Arc::new(DocumentService::new(
+        document_repository,
+        retriever_config,
+        cache.clone(),
+    ));
+
+    // Create claim extraction service with document service for on-demand fetching
+    let claim_extraction_service = ClaimExtractionService::new(
+        Arc::clone(&document_service),
         cache.clone(),
     );
 
     let vulnerability_service = web::Data::new(VulnerabilityService::new(
         OsvClient::new(),
         DepsDevClient::new(),
-        document_service,
-        cache.clone(),
-    ));
-
-    let document_service_data = web::Data::new(DocumentService::new(
-        document_repository,
-        retriever_config,
+        Arc::clone(&document_service),
+        claim_extraction_service,
         cache,
     ));
+
+    let document_service_data = web::Data::new(document_service);
 
     tracing::info!("Starting Trustify DA Agents server on {}", bind_addr);
 

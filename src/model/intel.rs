@@ -129,7 +129,7 @@ pub struct ReferenceId {
     pub id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq, Eq, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum SourceClaimReason {
     Identification,
