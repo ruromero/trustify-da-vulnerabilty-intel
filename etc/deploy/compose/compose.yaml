@@ -1,0 +1,36 @@
+services:
+  redis:
+    image: redis:8.4.0-alpine
+    container_name: da-agent-redis
+    ports:
+      - "${DA_AGENT_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: da-agent-postgres
+    ports:
+      - "${DA_AGENT_POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${DA_AGENT_POSTGRES_USER:-da_agent}
+      POSTGRES_PASSWORD: ${DA_AGENT_POSTGRES_PASSWORD:-da_agent}
+      POSTGRES_DB: ${DA_AGENT_POSTGRES_DB:-da_agent}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DA_AGENT_POSTGRES_USER:-da_agent}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  postgres-data:
