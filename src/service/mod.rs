@@ -1,14 +1,18 @@
+pub mod assessment;
 pub mod cache;
-pub mod claim_extraction;
+pub mod claims;
 pub mod depsdev;
 pub mod document;
+pub mod llm;
 pub mod osv;
 pub mod redhat_csaf;
 pub mod vulnerability;
 
+pub use assessment::VulnerabilityAssessmentService;
 pub use cache::VulnerabilityCache;
-pub use claim_extraction::ClaimExtractionService;
+pub use claims::ClaimExtractionService;
 pub use depsdev::DepsDevClient;
 pub use document::DocumentService;
+pub use llm::LlmClient;
 pub use osv::OsvClient;
 pub use vulnerability::VulnerabilityService;

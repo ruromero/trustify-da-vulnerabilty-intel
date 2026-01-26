@@ -283,7 +283,8 @@ pub enum RangeType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct OverallConfidence {
-    pub confidence_level: ConfidenceLevel,
+    pub level: ConfidenceLevel,
+    pub score: f64,
     pub reason: String,
 }
 
@@ -350,18 +351,9 @@ pub struct ImpactAssessment {
     pub notes: Option<String>,
 }
 
-// Describes the vulnerability intelligence for a specific package
-// - cve_identity: the CVE identity of the vulnerability
-// - package: package under investigation
-// - affected_versions: when does the vulnerability affect the package
-// - fixed_versions: when is the vulnerability fixed
-// - exploitability: is it exploitable in the specific package
-// - impact: how bad is if the vulnerability is exploited
-// - confidence: how confident the system is in the vulnerability intelligence
-// - claims: claims made about the vulnerability intelligence
-// - limitations: what are the caveats
-// - generated_at: when the information was produced
-// - requested_at: when the the information was last fetched
+/// Describes the static vulnerability intelligence for a specific package
+/// Contains all static data retrieved from external sources plus extracted claims.
+/// This is the input for assessment operations.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct VulnerabilityIntel {
     pub cve_identity: CveIdentity,
@@ -370,14 +362,28 @@ pub struct VulnerabilityIntel {
     pub affected_versions: Vec<AffectedRange>,
     pub fixed_versions: Vec<FixedRange>,
     pub vendor_remediations: Vec<VendorRemediation>,
-    pub exploitability: ExploitabilityAssessment,
-    pub impact: ImpactAssessment,
     pub claims: Vec<SourceClaim>,
-    pub confidence: OverallConfidence,
-    pub limitations: Vec<Limitation>,
     /// IDs of retrieved reference documents (content hashes)
     pub reference_ids: Vec<String>,
+}
+
+/// Describes the complete vulnerability assessment for a specific package
+/// Contains the static intelligence plus LLM-generated assessments.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct VulnerabilityAssessment {
+    /// Static intelligence data and extracted claims
+    pub intel: VulnerabilityIntel,
+    /// Exploitability assessment
+    pub exploitability: ExploitabilityAssessment,
+    /// Impact assessment
+    pub impact: ImpactAssessment,
+    /// Overall confidence in the assessment
+    pub confidence: OverallConfidence,
+    /// Limitations and caveats
+    pub limitations: Vec<Limitation>,
+    /// When the assessment was generated
     pub generated_at: DateTime<Utc>,
+    /// When the underlying data was retrieved from external sources
     pub retrieved_at: DateTime<Utc>,
 }
 

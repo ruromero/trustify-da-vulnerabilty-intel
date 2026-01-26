@@ -12,8 +12,8 @@ mod service;
 use db::repository::ReferenceDocumentRepository;
 use model::Config;
 use service::{
-    ClaimExtractionService, DepsDevClient, DocumentService, OsvClient, VulnerabilityCache,
-    VulnerabilityService,
+    ClaimExtractionService, DepsDevClient, DocumentService, LlmClient, OsvClient,
+    VulnerabilityAssessmentService, VulnerabilityCache, VulnerabilityService,
 };
 
 #[tokio::main]
@@ -65,17 +65,29 @@ async fn main() -> std::io::Result<()> {
         cache.clone(),
     ));
 
-    // Create claim extraction service with document service for on-demand fetching
+    // Create shared LLM client (used by both claim extraction and assessment)
+    // OpenAI API key is required
+    let api_key = std::env::var("OPENAI_API_KEY")
+        .expect("Missing required environment variable: OPENAI_API_KEY");
+    let llm_client = LlmClient::new(&api_key)
+        .expect("Failed to create LLM client: invalid OPENAI_API_KEY");
+
+    // Create claim extraction service with shared LLM client
     let claim_extraction_service = ClaimExtractionService::new(
+        llm_client.clone(),
         Arc::clone(&document_service),
         cache.clone(),
     );
+
+    // Create vulnerability assessment service with shared LLM client (can use different model)
+    let assessment_service = VulnerabilityAssessmentService::new(llm_client);
 
     let vulnerability_service = web::Data::new(VulnerabilityService::new(
         OsvClient::new(),
         DepsDevClient::new(),
         Arc::clone(&document_service),
         claim_extraction_service,
+        assessment_service,
         cache,
     ));
 
