@@ -31,3 +31,4 @@ utoipa = { version = "5.4.0", features = ["yaml", "actix_extras", "chrono", "url
 utoipa-actix-web = "0.1.2"
 rig-core = "0.29.0"
 schemars = "1.0"
+semver = "1.0"

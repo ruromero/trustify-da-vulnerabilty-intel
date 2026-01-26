@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+pub mod action_extraction;
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ApplicabilityResult {
-    pub applicable: ApplicabilityStatus,
+    pub requires_action: ApplicabilityStatus,
     pub justification: String,
     pub confidence: ConfidenceLevel,
     pub sources: Vec<SourceType>,

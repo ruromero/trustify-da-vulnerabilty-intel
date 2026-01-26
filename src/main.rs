@@ -80,7 +80,7 @@ async fn main() -> std::io::Result<()> {
     );
 
     // Create vulnerability assessment service with shared LLM client (can use different model)
-    let assessment_service = VulnerabilityAssessmentService::new(llm_client);
+    let assessment_service = VulnerabilityAssessmentService::new(llm_client.clone());
 
     let vulnerability_service = Arc::new(VulnerabilityService::new(
         OsvClient::new(),
@@ -91,8 +91,10 @@ async fn main() -> std::io::Result<()> {
         cache,
     ));
 
-    let remediation_service =
-        web::Data::new(RemediationService::new(Arc::clone(&vulnerability_service)));
+    let remediation_service = web::Data::new(RemediationService::new(
+        Arc::clone(&vulnerability_service),
+        llm_client.clone(),
+    ));
     let vulnerability_service_data = web::Data::from(vulnerability_service);
     let document_service_data = web::Data::new(document_service);
 

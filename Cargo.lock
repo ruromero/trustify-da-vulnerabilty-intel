@@ -3612,6 +3612,7 @@ dependencies = [
  "rig-core",
  "schemars",
  "scraper",
+ "semver",
  "serde",
  "serde_json",
  "serde_yaml",
