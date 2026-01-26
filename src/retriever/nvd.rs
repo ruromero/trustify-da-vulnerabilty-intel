@@ -6,10 +6,7 @@ use reqwest::Client;
 use scraper::{Html, Selector};
 use url::Url;
 
-use super::{
-    extract_domain, is_nvd_url, DocumentRetriever, RetrievedDocument,
-    RetrieverError,
-};
+use super::{DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain, is_nvd_url};
 use crate::model::{ContentType, ReferenceMetadata, RetrieverType};
 
 /// Retriever for NVD vulnerability pages
@@ -35,10 +32,10 @@ impl NvdRetriever {
     /// Extract vulnerability description from NVD HTML
     fn extract_description(&self, html: &str) -> Option<String> {
         let document = Html::parse_document(html);
-        
+
         // Select element with data-testid="vuln-description"
         let selector = Selector::parse(r#"[data-testid="vuln-description"]"#).ok()?;
-        
+
         document
             .select(&selector)
             .next()
@@ -101,7 +98,7 @@ impl DocumentRetriever for NvdRetriever {
         }
 
         let html = response.text().await?;
-        
+
         let cve_id = self.extract_cve_id(url);
         let description = self.extract_description(&html);
         let normalized = self.build_normalized(cve_id.as_deref(), description.as_deref());

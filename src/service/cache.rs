@@ -3,7 +3,7 @@
 use std::env;
 
 use redis::{AsyncCommands, Client};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 // Environment variable names
 const ENV_REDIS_HOST: &str = "DA_AGENT_REDIS_HOST";
@@ -91,7 +91,11 @@ impl VulnerabilityCache {
     }
 
     /// Cache vulnerability data by CVE ID
-    pub async fn set_vulnerability<T: Serialize>(&self, cve: &str, data: &T) -> Result<(), CacheError> {
+    pub async fn set_vulnerability<T: Serialize>(
+        &self,
+        cve: &str,
+        data: &T,
+    ) -> Result<(), CacheError> {
         self.set_with_prefix(PREFIX_VULNERABILITY, cve, data).await
     }
 
@@ -125,23 +129,33 @@ impl VulnerabilityCache {
         self.set_with_prefix(PREFIX_CLAIMS, doc_id, data).await
     }
 
-    async fn get_with_prefix<T: DeserializeOwned>(&self, prefix: &str, key: &str) -> Result<T, CacheError> {
+    async fn get_with_prefix<T: DeserializeOwned>(
+        &self,
+        prefix: &str,
+        key: &str,
+    ) -> Result<T, CacheError> {
         let full_key = format!("{}{}", prefix, key);
         let mut conn = self.client.get_multiplexed_async_connection().await?;
 
         let data: Option<String> = conn.get(&full_key).await?;
 
         match data {
-            Some(json) => serde_json::from_str(&json)
-                .map_err(|e| CacheError::Serialization(e.to_string())),
+            Some(json) => {
+                serde_json::from_str(&json).map_err(|e| CacheError::Serialization(e.to_string()))
+            }
             None => Err(CacheError::Miss(key.to_string())),
         }
     }
 
-    async fn set_with_prefix<T: Serialize>(&self, prefix: &str, key: &str, data: &T) -> Result<(), CacheError> {
+    async fn set_with_prefix<T: Serialize>(
+        &self,
+        prefix: &str,
+        key: &str,
+        data: &T,
+    ) -> Result<(), CacheError> {
         let full_key = format!("{}{}", prefix, key);
-        let json = serde_json::to_string(data)
-            .map_err(|e| CacheError::Serialization(e.to_string()))?;
+        let json =
+            serde_json::to_string(data).map_err(|e| CacheError::Serialization(e.to_string()))?;
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
         let _: () = conn.set_ex(&full_key, json, self.ttl_seconds).await?;

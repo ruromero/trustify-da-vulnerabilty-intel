@@ -6,6 +6,7 @@ pub mod document;
 pub mod llm;
 pub mod osv;
 pub mod redhat_csaf;
+pub mod remediation;
 pub mod vulnerability;
 
 pub use assessment::VulnerabilityAssessmentService;
@@ -15,4 +16,5 @@ pub use depsdev::DepsDevClient;
 pub use document::DocumentService;
 pub use llm::LlmClient;
 pub use osv::OsvClient;
+pub use remediation::RemediationService;
 pub use vulnerability::VulnerabilityService;

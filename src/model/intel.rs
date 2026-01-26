@@ -363,7 +363,6 @@ pub struct VulnerabilityIntel {
     pub fixed_versions: Vec<FixedRange>,
     pub vendor_remediations: Vec<VendorRemediation>,
     pub claims: Vec<SourceClaim>,
-    /// IDs of retrieved reference documents (content hashes)
     pub reference_ids: Vec<String>,
 }
 
@@ -401,7 +400,7 @@ pub struct AffectedRange {
     pub introduced: Option<String>,
     pub last_affected: Option<String>,
     pub raw: Option<String>,
-} 
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct FixedRange {
@@ -431,14 +430,14 @@ pub enum RemediationCategory {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct VulnerabilityIntelRequest {
+pub struct VulnerabilityAssessmentRequest {
     pub cve: String,
     pub package: PackageIdentity,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct VulnerabilityIntelResponse {
-    pub intel: VulnerabilityIntel,
+pub struct VulnerabilityAssessmentResponse {
+    pub assessment: VulnerabilityAssessment,
     pub request_id: String,
 }
 
@@ -446,6 +445,26 @@ pub struct VulnerabilityIntelResponse {
 pub struct RemediationPlanRequest {
     pub cve: String,
     pub package: PackageIdentity,
+    pub trusted_content: Option<TrustedRemediation>,
+}
+
+// Describes the trusted content remediation for a specific package and CVE.
+// This information will be provided by the customer and will be used to assess the vulnerability.
+// Theoretically, this information will be retrieved from Trustify /recommend endpoint.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TrustedRemediation {
+    pub purl: Url,
+    pub status: RemediationStatus,
+    pub justification: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RemediationStatus {
+    NotAffected,
+    Affected,
+    Fixed,
+    UnderInvestigation,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -489,6 +508,6 @@ pub struct RemediationPlan {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct RemediationPlanResponse {
     pub plan: RemediationPlan,
-    pub intel: VulnerabilityIntel,
+    pub intel: VulnerabilityAssessment,
     pub request_id: String,
 }

@@ -35,7 +35,8 @@ impl OsvClient {
     /// 1. `OSV_BASE_URL` environment variable if set
     /// 2. Default OSV.dev API URL
     pub fn new() -> Self {
-        let resolved_url = env::var(OSV_BASE_URL_ENV).ok()
+        let resolved_url = env::var(OSV_BASE_URL_ENV)
+            .ok()
             .unwrap_or_else(|| OSV_API_BASE_URL.to_string());
 
         Self {

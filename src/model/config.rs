@@ -76,8 +76,8 @@ impl Config {
         let host = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
 
         // Load config file
-        let config_path = std::env::var(ENV_CONFIG_PATH)
-            .unwrap_or_else(|_| DEFAULT_CONFIG_PATH.to_string());
+        let config_path =
+            std::env::var(ENV_CONFIG_PATH).unwrap_or_else(|_| DEFAULT_CONFIG_PATH.to_string());
 
         let retrievers = Self::load_config_file(&config_path)
             .map(|cf| cf.retrievers)

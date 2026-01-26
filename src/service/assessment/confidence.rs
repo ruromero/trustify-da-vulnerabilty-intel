@@ -3,14 +3,20 @@
 use regex::Regex;
 
 use crate::model::{
-    ClaimCertainty, ConfidenceLevel, ExploitabilityAssessment, ExploitabilityStatus,
-    Limitation, LimitationReason, OverallConfidence, SourceClaimReason, TrustLevel,
-    VulnerabilityIntel,
+    ClaimCertainty, ConfidenceLevel, ExploitabilityAssessment, ExploitabilityStatus, Limitation,
+    LimitationReason, OverallConfidence, SourceClaimReason, TrustLevel, VulnerabilityIntel,
 };
 use crate::service::llm::LlmClient;
 
 /// Hard-banned substrings that trigger regeneration
-const BANNED_PHRASES: &[&str] = &["however", "overall", "influence", "suggest", "indicate", "appears"];
+const BANNED_PHRASES: &[&str] = &[
+    "however",
+    "overall",
+    "influence",
+    "suggest",
+    "indicate",
+    "appears",
+];
 
 /// Maximum retries for confidence reason generation
 const MAX_RETRIES: usize = 3;
@@ -209,7 +215,9 @@ async fn generate_confidence_reason(
 
     // Confidence-consistent tone guidance
     let tone_guidance = match confidence_level {
-        ConfidenceLevel::High => "Use language like 'predominantly', 'clearly supported', 'limited limitations'",
+        ConfidenceLevel::High => {
+            "Use language like 'predominantly', 'clearly supported', 'limited limitations'"
+        }
         ConfidenceLevel::Medium => "Use language like 'mixed evidence', 'some uncertainty'",
         ConfidenceLevel::Low => "Use language like 'limited evidence', 'significant uncertainty'",
     };
@@ -271,7 +279,10 @@ Do NOT:
 
                 // A. Post-validate: Reject phrases automatically
                 let reason_lower = reason.to_lowercase();
-                if let Some(banned) = BANNED_PHRASES.iter().find(|phrase| reason_lower.contains(*phrase)) {
+                if let Some(banned) = BANNED_PHRASES
+                    .iter()
+                    .find(|phrase| reason_lower.contains(*phrase))
+                {
                     tracing::warn!(
                         attempt = attempt,
                         banned_phrase = banned,
@@ -319,6 +330,9 @@ fn sanitize_reason(reason: &str, banned_phrases: &[&str]) -> String {
     let mut sanitized = reason.to_string();
     let reason_lower = sanitized.to_lowercase();
 
+    // Compile regex once for whitespace cleanup
+    let whitespace_regex = Regex::new(r"\s+").unwrap();
+
     for phrase in banned_phrases {
         if reason_lower.contains(phrase) {
             // Try to remove the phrase and surrounding context
@@ -326,10 +340,7 @@ fn sanitize_reason(reason: &str, banned_phrases: &[&str]) -> String {
                 .unwrap_or_else(|_| Regex::new(phrase).unwrap());
             sanitized = pattern.replace_all(&sanitized, "").to_string();
             // Clean up extra spaces
-            sanitized = Regex::new(r"\s+")
-                .unwrap()
-                .replace_all(&sanitized, " ")
-                .to_string();
+            sanitized = whitespace_regex.replace_all(&sanitized, " ").to_string();
             sanitized = sanitized.trim().to_string();
         }
     }

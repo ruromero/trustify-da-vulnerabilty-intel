@@ -4,19 +4,19 @@ use crate::model::{ReferenceDocument, RetrieverType, SourceClaim, SourceClaimRea
 
 /// Security-related terms that must appear in excerpts for Identification claims
 const SECURITY_TERMS: &[&str] = &[
-    "vulnerab",      // vulnerability, vulnerable
+    "vulnerab", // vulnerability, vulnerable
     "cve",
     "cwe",
     "security",
     "exploit",
     "attack",
-    "inject",        // injection
+    "inject", // injection
     "overflow",
     "bypass",
-    "leak",          // data leak, memory leak
-    "denial",        // denial of service
+    "leak",   // data leak, memory leak
+    "denial", // denial of service
     "dos",
-    "rce",           // remote code execution
+    "rce", // remote code execution
     "xss",
     "csrf",
     "sqli",
@@ -25,7 +25,7 @@ const SECURITY_TERMS: &[&str] = &[
     "rfi",
     "unauthorized",
     "privilege",
-    "escalat",       // escalation
+    "escalat", // escalation
     "malicious",
     "arbitrary",
     "remote code",
@@ -89,9 +89,7 @@ fn is_valid_security_claim(claim: &SourceClaim, _doc: &ReferenceDocument) -> boo
     // For Identification claims, check for security-related terms
     // But be lenient - only filter if it's clearly not security-related
     if matches!(claim.reason, SourceClaimReason::Identification) {
-        let has_security_terms = SECURITY_TERMS
-            .iter()
-            .any(|term| excerpt.contains(term));
+        let has_security_terms = SECURITY_TERMS.iter().any(|term| excerpt.contains(term));
 
         // Also check for common non-security patterns that indicate noise
         let is_noise = NOISE_PATTERNS

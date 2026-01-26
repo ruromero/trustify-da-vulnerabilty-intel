@@ -4,13 +4,13 @@
 
 use rig::providers::openai;
 
-use crate::model::{
-    ExploitabilityAssessment, ImpactAssessment, Limitation, VulnerabilityIntel,
-};
+use crate::model::assessments::ExtractedAssessment;
+use crate::model::{ExploitabilityAssessment, ImpactAssessment, Limitation, VulnerabilityIntel};
 use crate::service::assessment::confidence::compute_confidence;
-use crate::service::assessment::converters::{convert_exploitability, convert_impact, convert_limitation};
-use crate::model::assessment::ExtractedAssessment;
-use crate::service::assessment::prompts::{build_assessment_prompt, ASSESSMENT_SYSTEM_PROMPT};
+use crate::service::assessment::converters::{
+    convert_exploitability, convert_impact, convert_limitation,
+};
+use crate::service::assessment::prompts::{ASSESSMENT_SYSTEM_PROMPT, build_assessment_prompt};
 use crate::service::llm::LlmClient;
 
 /// Environment variable for assessment model (defaults to GPT-4O if not set)
@@ -39,8 +39,8 @@ impl VulnerabilityAssessmentService {
     /// Optionally uses ASSESSMENT_MODEL env var (defaults to gpt-4o-mini)
     pub fn new(llm_client: LlmClient) -> Self {
         // Allow different model for assessment vs claim extraction
-        let model = std::env::var(ENV_ASSESSMENT_MODEL)
-            .unwrap_or_else(|_| DEFAULT_MODEL.to_string());
+        let model =
+            std::env::var(ENV_ASSESSMENT_MODEL).unwrap_or_else(|_| DEFAULT_MODEL.to_string());
 
         tracing::info!(
             model = %model,
@@ -55,7 +55,8 @@ impl VulnerabilityAssessmentService {
         &self,
         cve_id: &str,
         intel: &VulnerabilityIntel,
-    ) -> Result<(ExploitabilityAssessment, ImpactAssessment, Vec<Limitation>), AssessmentError> {
+    ) -> Result<(ExploitabilityAssessment, ImpactAssessment, Vec<Limitation>), AssessmentError>
+    {
         let start_time = std::time::Instant::now();
 
         tracing::debug!(
@@ -70,7 +71,8 @@ impl VulnerabilityAssessmentService {
         let prompt_length = prompt.len();
 
         // Create extractor and extract assessment using shared LLM client
-        let extractor = self.llm_client
+        let extractor = self
+            .llm_client
             .openai_client()
             .extractor::<ExtractedAssessment>(&self.model)
             .preamble(ASSESSMENT_SYSTEM_PROMPT)

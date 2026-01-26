@@ -64,8 +64,8 @@ impl RedHatCsafClient {
             .await
             .map_err(|e| CsafError::ParseError(e.to_string()))?;
 
-        let csaf: CsafDocument = serde_json::from_str(&raw_json)
-            .map_err(|e| CsafError::ParseError(e.to_string()))?;
+        let csaf: CsafDocument =
+            serde_json::from_str(&raw_json).map_err(|e| CsafError::ParseError(e.to_string()))?;
 
         Ok(self.extract_data(&csaf, cve, Some(raw_json)))
     }
@@ -85,7 +85,12 @@ impl RedHatCsafClient {
     }
 
     /// Extract references, remediations, and notes from CSAF document
-    fn extract_data(&self, csaf: &CsafDocument, cve: &str, raw_json: Option<String>) -> RedHatCsafResponse {
+    fn extract_data(
+        &self,
+        csaf: &CsafDocument,
+        cve: &str,
+        raw_json: Option<String>,
+    ) -> RedHatCsafResponse {
         let mut remediations = Vec::new();
         let mut references = Vec::new();
         let mut notes: Vec<ModelCsafNote> = Vec::new();
@@ -102,10 +107,10 @@ impl RedHatCsafClient {
 
         for vulnerability in &csaf.vulnerabilities {
             // Check if this vulnerability matches our CVE
-            if let Some(ref vuln_cve) = vulnerability.cve {
-                if !vuln_cve.eq_ignore_ascii_case(cve) {
-                    continue;
-                }
+            if let Some(ref vuln_cve) = vulnerability.cve
+                && !vuln_cve.eq_ignore_ascii_case(cve)
+            {
+                continue;
             }
 
             // Extract vulnerability-level references
@@ -170,7 +175,8 @@ impl RedHatCsafClient {
     /// 2. If both access.redhat.com and security.access.redhat.com exist for same CVE path, keep only access.redhat.com
     fn deduplicate_redhat_references(&self, references: Vec<Reference>) -> Vec<Reference> {
         let mut result = Vec::new();
-        let mut security_urls_to_skip: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let mut security_urls_to_skip: std::collections::HashSet<String> =
+            std::collections::HashSet::new();
 
         // First pass: find security.access.redhat.com URLs that have an access.redhat.com equivalent
         for reference in &references {
@@ -198,8 +204,8 @@ impl RedHatCsafClient {
             }
 
             // Skip duplicate security.access.redhat.com URLs
-            let is_security_duplicate = host == "security.access.redhat.com"
-                && security_urls_to_skip.contains(&url_str);
+            let is_security_duplicate =
+                host == "security.access.redhat.com" && security_urls_to_skip.contains(&url_str);
 
             if is_security_duplicate {
                 tracing::debug!(

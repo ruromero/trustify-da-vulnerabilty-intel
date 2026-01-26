@@ -7,7 +7,7 @@ use reqwest::Client;
 use serde::Deserialize;
 use url::Url;
 
-use super::{extract_domain, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain};
 use crate::model::{Comment, ContentType, ReferenceMetadata, RetrieverType};
 
 const BUGZILLA_API_BASE: &str = "https://bugzilla.redhat.com/rest";
@@ -26,10 +26,7 @@ impl BugzillaRetriever {
                 .build()
                 .unwrap_or_else(|_| Client::new()),
             // Matches: bugzilla.redhat.com/show_bug.cgi?id=123456 or bugzilla.redhat.com/123456
-            bug_pattern: Regex::new(
-                r"bugzilla\.redhat\.com/(?:show_bug\.cgi\?id=)?(\d+)",
-            )
-            .unwrap(),
+            bug_pattern: Regex::new(r"bugzilla\.redhat\.com/(?:show_bug\.cgi\?id=)?(\d+)").unwrap(),
         }
     }
 
@@ -112,7 +109,7 @@ impl DocumentRetriever for BugzillaRetriever {
                 let comments_json = response.text().await.unwrap_or_default();
                 let comments_data: BugzillaCommentsResponse =
                     serde_json::from_str(&comments_json).unwrap_or_default();
-                
+
                 comments_data
                     .bugs
                     .get(&bug_id)
@@ -145,14 +142,18 @@ impl DocumentRetriever for BugzillaRetriever {
             bug.product.as_deref().unwrap_or("Unknown"),
             bug.component.as_deref().unwrap_or("Unknown"),
             bug.severity.as_deref().unwrap_or("Unknown"),
-            comments.iter().map(|c| {
-                format!(
-                    "**{}** ({})\n\n{}\n\n---\n",
-                    c.author.as_deref().unwrap_or("Anonymous"),
-                    c.timestamp.map(|t| t.to_rfc3339()).unwrap_or_default(),
-                    c.text
-                )
-            }).collect::<Vec<_>>().join("\n")
+            comments
+                .iter()
+                .map(|c| {
+                    format!(
+                        "**{}** ({})\n\n{}\n\n---\n",
+                        c.author.as_deref().unwrap_or("Anonymous"),
+                        c.timestamp.map(|t| t.to_rfc3339()).unwrap_or_default(),
+                        c.text
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
         );
 
         let created_at = bug
@@ -185,13 +186,10 @@ impl DocumentRetriever for BugzillaRetriever {
                 commit_message: None,
                 authors: bug.creator.map(|c| vec![c]).unwrap_or_default(),
                 tags: bug.keywords.unwrap_or_default(),
-                labels: vec![
-                    bug.status,
-                    bug.severity.unwrap_or_default(),
-                ]
-                .into_iter()
-                .filter(|s| !s.is_empty())
-                .collect(),
+                labels: vec![bug.status, bug.severity.unwrap_or_default()]
+                    .into_iter()
+                    .filter(|s| !s.is_empty())
+                    .collect(),
                 issue_number: bug.id.to_string().parse().ok(),
                 repository: None,
                 file_changes: vec![],

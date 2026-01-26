@@ -73,7 +73,7 @@ impl RetrievedDocument {
     /// Convert to ReferenceDocument with computed hash ID
     pub fn into_reference_document(self) -> ReferenceDocument {
         // Hash based on canonical URL + content for deduplication
-        let content_hash = compute_hash(&self.canonical_url.to_string(), &self.raw_content);
+        let content_hash = compute_hash(self.canonical_url.as_ref(), &self.raw_content);
 
         ReferenceDocument {
             id: content_hash.clone(),

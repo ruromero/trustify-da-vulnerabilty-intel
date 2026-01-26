@@ -7,7 +7,9 @@ use reqwest::Client;
 use serde::Deserialize;
 use url::Url;
 
-use super::{extract_domain, html_to_markdown, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{
+    DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain, html_to_markdown,
+};
 use crate::model::{ContentType, ReferenceMetadata, RetrieverType};
 
 /// Retriever for GitHub Security Advisories
@@ -37,9 +39,7 @@ impl GitHubAdvisoryRetriever {
         let path = url.path();
 
         // Global advisories: github.com/advisories/GHSA-xxxx-xxxx-xxxx
-        if (host == "github.com" || host == "www.github.com")
-            && path.starts_with("/advisories/")
-        {
+        if (host == "github.com" || host == "www.github.com") && path.starts_with("/advisories/") {
             return true;
         }
 
@@ -81,10 +81,10 @@ impl DocumentRetriever for GitHubAdvisoryRetriever {
         tracing::debug!(url = %url, ghsa_id = ?ghsa_id, "Fetching GitHub Advisory");
 
         // Try REST API first if we have a token and GHSA ID
-        if let (Some(token), Some(id)) = (&self.token, &ghsa_id) {
-            if let Ok(doc) = self.fetch_via_api(url, token, id).await {
-                return Ok(doc);
-            }
+        if let (Some(token), Some(id)) = (&self.token, &ghsa_id)
+            && let Ok(doc) = self.fetch_via_api(url, token, id).await
+        {
+            return Ok(doc);
         }
 
         // Fallback to HTML scraping
@@ -156,8 +156,7 @@ impl GitHubAdvisoryRetriever {
             advisory.description.as_deref().unwrap_or("")
         );
 
-        let retrieved_from = Url::parse(&api_url)
-            .unwrap_or_else(|_| original_url.clone());
+        let retrieved_from = Url::parse(&api_url).unwrap_or_else(|_| original_url.clone());
 
         Ok(RetrievedDocument {
             retrieved_from,
@@ -186,7 +185,9 @@ impl GitHubAdvisoryRetriever {
     }
 
     async fn fetch_html(&self, url: &Url) -> Result<RetrievedDocument, RetrieverError> {
-        let mut request = self.client.get(url.as_str())
+        let mut request = self
+            .client
+            .get(url.as_str())
             .header("User-Agent", "trustify-da-agent/1.0");
 
         if let Some(ref token) = self.token {

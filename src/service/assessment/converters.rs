@@ -1,12 +1,12 @@
 //! Converters from extracted LLM models to domain models
 
+use crate::model::assessments::{
+    ExtractedCertainty, ExtractedExploitability, ExtractedExploitabilityStatus, ExtractedImpact,
+    ExtractedImpactLevel, ExtractedImpactSeverity, ExtractedLimitation, ExtractedLimitationReason,
+};
 use crate::model::{
     ClaimCertainty, ExploitabilityAssessment, ExploitabilityStatus, ImpactAssessment, ImpactLevel,
     ImpactSeverity, Limitation, LimitationReason,
-};
-use crate::model::assessment::{
-    ExtractedCertainty, ExtractedExploitability, ExtractedExploitabilityStatus, ExtractedImpact,
-    ExtractedImpactLevel, ExtractedImpactSeverity, ExtractedLimitation, ExtractedLimitationReason,
 };
 
 /// Convert extracted exploitability to domain model

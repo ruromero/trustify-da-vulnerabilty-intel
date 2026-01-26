@@ -7,7 +7,7 @@ use reqwest::Client;
 use serde::Deserialize;
 use url::Url;
 
-use super::{extract_domain, is_github_url, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain, is_github_url};
 use crate::model::{ContentType, FileChange, FileStatus, ReferenceMetadata, RetrieverType};
 
 /// Retriever for GitHub Commits
@@ -176,15 +176,9 @@ impl GitHubCommitRetriever {
         .collect();
 
         // Extract first line of commit message as title
-        let title = commit
-            .commit
-            .message
-            .lines()
-            .next()
-            .map(|s| s.to_string());
+        let title = commit.commit.message.lines().next().map(|s| s.to_string());
 
-        let retrieved_from = Url::parse(&api_url)
-            .unwrap_or_else(|_| original_url.clone());
+        let retrieved_from = Url::parse(&api_url).unwrap_or_else(|_| original_url.clone());
 
         Ok(RetrievedDocument {
             retrieved_from,

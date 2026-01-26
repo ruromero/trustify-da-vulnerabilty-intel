@@ -2,11 +2,11 @@
 
 use sqlx::PgPool;
 
-use super::models::{
-    content_type_to_string, retriever_type_to_string, ListDocumentsQuery, PaginatedDocuments,
-    ReferenceDocumentRow,
-};
 use super::DbError;
+use super::models::{
+    ListDocumentsQuery, PaginatedDocuments, ReferenceDocumentRow, content_type_to_string,
+    retriever_type_to_string,
+};
 use crate::model::ReferenceDocument;
 
 const DEFAULT_PAGE_SIZE: u32 = 20;
@@ -60,9 +60,9 @@ impl ReferenceDocumentRepository {
         .bind(doc.canonical_url.to_string())
         .bind(&domain_url)
         .bind(retriever_type)
-        .bind(&doc.retrieved_at)
-        .bind(&doc.published)
-        .bind(&doc.last_modified)
+        .bind(doc.retrieved_at)
+        .bind(doc.published)
+        .bind(doc.last_modified)
         .bind(&doc.raw_content)
         .bind(&doc.normalized_content)
         .bind(content_type)
@@ -86,8 +86,7 @@ impl ReferenceDocumentRepository {
         .await?
         .ok_or_else(|| DbError::NotFound(id.to_string()))?;
 
-        row.into_domain()
-            .map_err(|e| DbError::Serialization(e))
+        row.into_domain().map_err(DbError::Serialization)
     }
 
     /// Check if a document exists by ID

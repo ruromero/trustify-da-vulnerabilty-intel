@@ -7,7 +7,10 @@ use reqwest::Client;
 use serde::Deserialize;
 use url::Url;
 
-use super::{extract_domain, html_to_markdown, is_github_url, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{
+    DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain, html_to_markdown,
+    is_github_url,
+};
 use crate::model::{ContentType, ReferenceMetadata, RetrieverType};
 
 /// Retriever for GitHub Issues
@@ -85,10 +88,10 @@ impl DocumentRetriever for GitHubIssueRetriever {
         );
 
         // Try API first if we have a token
-        if let Some(ref token) = self.token {
-            if let Ok(doc) = self.fetch_via_api(url, token, &owner, &repo, number).await {
-                return Ok(doc);
-            }
+        if let Some(ref token) = self.token
+            && let Ok(doc) = self.fetch_via_api(url, token, &owner, &repo, number).await
+        {
+            return Ok(doc);
         }
 
         // Fallback to HTML
@@ -146,20 +149,25 @@ impl GitHubIssueRetriever {
             "# {}\n\n**State:** {}\n**Author:** {}\n**Labels:** {}\n\n---\n\n{}",
             issue.title,
             issue.state,
-            issue.user.as_ref().map(|u| u.login.as_str()).unwrap_or("Unknown"),
-            issue.labels.iter().map(|l| l.name.as_str()).collect::<Vec<_>>().join(", "),
+            issue
+                .user
+                .as_ref()
+                .map(|u| u.login.as_str())
+                .unwrap_or("Unknown"),
+            issue
+                .labels
+                .iter()
+                .map(|l| l.name.as_str())
+                .collect::<Vec<_>>()
+                .join(", "),
             issue.body.as_deref().unwrap_or("")
         );
 
-        let authors = issue
-            .user
-            .map(|u| vec![u.login])
-            .unwrap_or_default();
+        let authors = issue.user.map(|u| vec![u.login]).unwrap_or_default();
 
         let labels: Vec<String> = issue.labels.into_iter().map(|l| l.name).collect();
 
-        let retrieved_from = Url::parse(&api_url)
-            .unwrap_or_else(|_| original_url.clone());
+        let retrieved_from = Url::parse(&api_url).unwrap_or_else(|_| original_url.clone());
 
         Ok(RetrievedDocument {
             retrieved_from,
@@ -194,7 +202,9 @@ impl GitHubIssueRetriever {
         repo: &str,
         number: u64,
     ) -> Result<RetrievedDocument, RetrieverError> {
-        let mut request = self.client.get(url.as_str())
+        let mut request = self
+            .client
+            .get(url.as_str())
             .header("User-Agent", "trustify-da-agent/1.0");
 
         if let Some(ref token) = self.token {

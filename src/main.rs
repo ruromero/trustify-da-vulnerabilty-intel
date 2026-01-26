@@ -13,7 +13,7 @@ use db::repository::ReferenceDocumentRepository;
 use model::Config;
 use service::{
     ClaimExtractionService, DepsDevClient, DocumentService, LlmClient, OsvClient,
-    VulnerabilityAssessmentService, VulnerabilityCache, VulnerabilityService,
+    RemediationService, VulnerabilityAssessmentService, VulnerabilityCache, VulnerabilityService,
 };
 
 #[tokio::main]
@@ -69,8 +69,8 @@ async fn main() -> std::io::Result<()> {
     // OpenAI API key is required
     let api_key = std::env::var("OPENAI_API_KEY")
         .expect("Missing required environment variable: OPENAI_API_KEY");
-    let llm_client = LlmClient::new(&api_key)
-        .expect("Failed to create LLM client: invalid OPENAI_API_KEY");
+    let llm_client =
+        LlmClient::new(&api_key).expect("Failed to create LLM client: invalid OPENAI_API_KEY");
 
     // Create claim extraction service with shared LLM client
     let claim_extraction_service = ClaimExtractionService::new(
@@ -82,7 +82,7 @@ async fn main() -> std::io::Result<()> {
     // Create vulnerability assessment service with shared LLM client (can use different model)
     let assessment_service = VulnerabilityAssessmentService::new(llm_client);
 
-    let vulnerability_service = web::Data::new(VulnerabilityService::new(
+    let vulnerability_service = Arc::new(VulnerabilityService::new(
         OsvClient::new(),
         DepsDevClient::new(),
         Arc::clone(&document_service),
@@ -91,16 +91,21 @@ async fn main() -> std::io::Result<()> {
         cache,
     ));
 
+    let remediation_service =
+        web::Data::new(RemediationService::new(Arc::clone(&vulnerability_service)));
+    let vulnerability_service_data = web::Data::from(vulnerability_service);
     let document_service_data = web::Data::new(document_service);
 
     tracing::info!("Starting Trustify DA Agents server on {}", bind_addr);
 
     HttpServer::new(move || {
         App::new()
-            .app_data(vulnerability_service.clone())
+            .app_data(vulnerability_service_data.clone())
+            .app_data(remediation_service.clone())
             .app_data(document_service_data.clone())
             .configure(api::vulnerability::configure)
             .configure(api::document::configure)
+            .configure(api::openapi::configure)
     })
     .bind(&bind_addr)?
     .run()

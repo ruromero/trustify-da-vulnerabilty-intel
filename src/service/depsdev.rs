@@ -58,8 +58,8 @@ impl DepsDevClient {
     /// 1. `DEPSDEV_BASE_URL` environment variable
     /// 2. Default deps.dev API URL
     pub fn new() -> Self {
-        let base_url = env::var(ENV_DEPSDEV_BASE_URL)
-            .unwrap_or_else(|_| DEPSDEV_API_BASE_URL.to_string());
+        let base_url =
+            env::var(ENV_DEPSDEV_BASE_URL).unwrap_or_else(|_| DEPSDEV_API_BASE_URL.to_string());
 
         Self {
             client: Client::new(),

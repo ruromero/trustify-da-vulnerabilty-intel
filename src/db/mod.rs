@@ -3,8 +3,8 @@
 pub mod models;
 pub mod repository;
 
-use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::env;
 
 // Environment variable names

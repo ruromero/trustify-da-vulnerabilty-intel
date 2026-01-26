@@ -5,14 +5,14 @@
 use rig::providers::openai;
 use std::sync::Arc;
 
+use crate::model::claims::ExtractedClaims;
 use crate::model::{
-    ClaimCertainty, ClaimEvidence, ReferenceDocument, ReferenceId, SourceClaim,
-    SourceClaimReason, SourceType, TrustLevel,
+    ClaimCertainty, ClaimEvidence, ReferenceDocument, ReferenceId, SourceClaim, SourceClaimReason,
+    SourceType, TrustLevel,
 };
 use crate::service::cache::VulnerabilityCache;
 use crate::service::claims::filters::{filter_weak_claims, should_skip_extraction};
-use crate::model::claims::ExtractedClaims;
-use crate::service::claims::prompts::{build_extraction_prompt, EXTRACTION_SYSTEM_PROMPT};
+use crate::service::claims::prompts::{EXTRACTION_SYSTEM_PROMPT, build_extraction_prompt};
 use crate::service::claims::synthesis::synthesize_claims;
 use crate::service::document::DocumentService;
 use crate::service::llm::LlmClient;
@@ -163,18 +163,15 @@ impl ClaimExtractionService {
     /// Get cached claims for a document
     async fn get_cached_claims(&self, doc_id: &str) -> Option<Vec<SourceClaim>> {
         let cache = self.cache.as_ref()?;
-        match cache.get_claims::<Vec<SourceClaim>>(doc_id).await {
-            Ok(claims) => Some(claims),
-            Err(_) => None,
-        }
+        cache.get_claims::<Vec<SourceClaim>>(doc_id).await.ok()
     }
 
     /// Cache claims for a document
     async fn cache_claims(&self, doc_id: &str, claims: &[SourceClaim]) {
-        if let Some(ref cache) = self.cache {
-            if let Err(e) = cache.set_claims(doc_id, &claims.to_vec()).await {
-                tracing::debug!(doc_id = %doc_id, error = %e, "Failed to cache claims");
-            }
+        if let Some(ref cache) = self.cache
+            && let Err(e) = cache.set_claims(doc_id, &claims.to_vec()).await
+        {
+            tracing::debug!(doc_id = %doc_id, error = %e, "Failed to cache claims");
         }
     }
 
@@ -185,10 +182,7 @@ impl ClaimExtractionService {
         doc: &ReferenceDocument,
     ) -> Result<Vec<SourceClaim>, ClaimExtractionError> {
         // Use normalized content if available, otherwise raw content
-        let content = doc
-            .normalized_content
-            .as_ref()
-            .unwrap_or(&doc.raw_content);
+        let content = doc.normalized_content.as_ref().unwrap_or(&doc.raw_content);
 
         // Skip empty or very short content
         if content.len() < 50 {
@@ -219,7 +213,8 @@ impl ClaimExtractionService {
         let start_time = std::time::Instant::now();
 
         // Create extractor and extract claims using shared LLM client
-        let extractor = self.llm_client
+        let extractor = self
+            .llm_client
             .openai_client()
             .extractor::<ExtractedClaims>(&self.model)
             .preamble(EXTRACTION_SYSTEM_PROMPT)
@@ -273,7 +268,11 @@ impl ClaimExtractionService {
     }
 
     /// Convert an extracted claim to a SourceClaim
-    fn convert_to_source_claim(&self, extracted: crate::model::claims::ExtractedClaim, doc: &ReferenceDocument) -> SourceClaim {
+    fn convert_to_source_claim(
+        &self,
+        extracted: crate::model::claims::ExtractedClaim,
+        doc: &ReferenceDocument,
+    ) -> SourceClaim {
         use crate::model::claims::{ExtractedCertainty, ExtractedReason};
 
         let reason = match extracted.reason {
@@ -318,8 +317,12 @@ fn determine_trust_level(doc: &ReferenceDocument) -> TrustLevel {
     use crate::model::RetrieverType;
     match doc.retriever {
         RetrieverType::Nvd | RetrieverType::CveOrg | RetrieverType::RedHatCsaf => TrustLevel::High,
-        RetrieverType::GitAdvisory | RetrieverType::GitCveV5 | RetrieverType::Bugzilla => TrustLevel::Medium,
-        RetrieverType::GitCommit | RetrieverType::GitIssue | RetrieverType::GitRelease => TrustLevel::Medium,
+        RetrieverType::GitAdvisory | RetrieverType::GitCveV5 | RetrieverType::Bugzilla => {
+            TrustLevel::Medium
+        }
+        RetrieverType::GitCommit | RetrieverType::GitIssue | RetrieverType::GitRelease => {
+            TrustLevel::Medium
+        }
         RetrieverType::Generic => TrustLevel::Low,
     }
 }

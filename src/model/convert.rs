@@ -3,8 +3,14 @@
 use chrono::{DateTime, Utc};
 use url::Url;
 
-use super::intel::{AffectedRange, CveIdentity, CveReference, FixedRange, SourceType, CvssType, CvssVector, RangeType};
-use super::osv::{OsvAffected, OsvRange, OsvRangeType, OsvReference, OsvReferenceType, OsvSeverity, OsvVulnerability};
+use super::intel::{
+    AffectedRange, CveIdentity, CveReference, CvssType, CvssVector, FixedRange, RangeType,
+    SourceType,
+};
+use super::osv::{
+    OsvAffected, OsvRange, OsvRangeType, OsvReference, OsvReferenceType, OsvSeverity,
+    OsvVulnerability,
+};
 
 impl From<OsvVulnerability> for CveIdentity {
     fn from(osv: OsvVulnerability) -> Self {
@@ -98,23 +104,24 @@ pub struct ExtractedVersions {
 }
 
 /// Extract affected and fixed version ranges from OSV affected entries
-/// 
+///
 /// This function processes the OSV affected array and extracts:
 /// - Affected versions: ranges where the vulnerability exists (introduced..fixed or introduced..last_affected)
 /// - Fixed versions: specific versions where the vulnerability was fixed
-pub fn extract_versions_from_affected(affected_entries: &[OsvAffected], purl: Option<&str>) -> ExtractedVersions {
+pub fn extract_versions_from_affected(
+    affected_entries: &[OsvAffected],
+    purl: Option<&str>,
+) -> ExtractedVersions {
     let mut result = ExtractedVersions::default();
 
     for affected in affected_entries {
         // If purl is provided, filter by matching package
-        if let Some(purl) = purl {
-            if let Some(ref pkg) = affected.package {
-                if let Some(ref pkg_purl) = pkg.purl {
-                    if pkg_purl != purl {
-                        continue;
-                    }
-                }
-            }
+        if let Some(purl) = purl
+            && let Some(ref pkg) = affected.package
+            && let Some(ref pkg_purl) = pkg.purl
+            && pkg_purl != purl
+        {
+            continue;
         }
 
         // Process explicit versions list
@@ -149,13 +156,13 @@ fn extract_from_range(range: &OsvRange) -> ExtractedVersions {
     result.fixed.extend(main_versions.fixed);
 
     // Process database_specific.versions if present (semantic versions for GIT ranges)
-    if let Some(ref db_specific) = range.database_specific {
-        if !db_specific.versions.is_empty() {
-            // These are semantic versions, use Semver type
-            let semver_versions = extract_from_events(&db_specific.versions, RangeType::Semver);
-            result.affected.extend(semver_versions.affected);
-            result.fixed.extend(semver_versions.fixed);
-        }
+    if let Some(ref db_specific) = range.database_specific
+        && !db_specific.versions.is_empty()
+    {
+        // These are semantic versions, use Semver type
+        let semver_versions = extract_from_events(&db_specific.versions, RangeType::Semver);
+        result.affected.extend(semver_versions.affected);
+        result.fixed.extend(semver_versions.fixed);
     }
 
     result

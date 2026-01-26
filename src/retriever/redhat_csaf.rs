@@ -1,18 +1,18 @@
 //! Red Hat CSAF retriever for access.redhat.com URLs
-//! 
+//!
 //! Uses cached CSAF VEX data to generate normalized content from vulnerability notes.
 
 use async_trait::async_trait;
 use regex::Regex;
 use url::Url;
 
-use super::{extract_domain, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain};
 use crate::model::redhat_csaf::RedHatCsafResponse;
 use crate::model::{ContentType, ReferenceMetadata, RetrieverType};
 use crate::service::cache::VulnerabilityCache;
 
 /// Retriever for Red Hat security advisory pages (access.redhat.com)
-/// 
+///
 /// Uses the cached CSAF VEX data instead of fetching the web page directly.
 pub struct RedHatCsafRetriever {
     cache: Option<VulnerabilityCache>,
@@ -72,9 +72,9 @@ impl DocumentRetriever for RedHatCsafRetriever {
     }
 
     async fn retrieve(&self, url: &Url) -> Result<RetrievedDocument, RetrieverError> {
-        let cve_id = self
-            .extract_cve_from_url(url)
-            .ok_or_else(|| RetrieverError::ParseError("Could not extract CVE ID from URL".to_string()))?;
+        let cve_id = self.extract_cve_from_url(url).ok_or_else(|| {
+            RetrieverError::ParseError("Could not extract CVE ID from URL".to_string())
+        })?;
 
         tracing::debug!(
             url = %url,
@@ -84,21 +84,19 @@ impl DocumentRetriever for RedHatCsafRetriever {
 
         // Try to get from cache
         let csaf_response: RedHatCsafResponse = match &self.cache {
-            Some(cache) => {
-                match cache.get_csaf::<RedHatCsafResponse>(&cve_id).await {
-                    Ok(cached) => {
-                        tracing::debug!(cve = %cve_id, "Cache hit for Red Hat CSAF in retriever");
-                        cached
-                    }
-                    Err(_) => {
-                        tracing::debug!(cve = %cve_id, "Cache miss for Red Hat CSAF in retriever");
-                        return Err(RetrieverError::NotFound(format!(
-                            "Red Hat CSAF data not cached for {}. Will be fetched during vulnerability intel request.",
-                            cve_id
-                        )));
-                    }
+            Some(cache) => match cache.get_csaf::<RedHatCsafResponse>(&cve_id).await {
+                Ok(cached) => {
+                    tracing::debug!(cve = %cve_id, "Cache hit for Red Hat CSAF in retriever");
+                    cached
                 }
-            }
+                Err(_) => {
+                    tracing::debug!(cve = %cve_id, "Cache miss for Red Hat CSAF in retriever");
+                    return Err(RetrieverError::NotFound(format!(
+                        "Red Hat CSAF data not cached for {}. Will be fetched during vulnerability intel request.",
+                        cve_id
+                    )));
+                }
+            },
             None => {
                 return Err(RetrieverError::ParseError(
                     "Cache not available for Red Hat CSAF retriever".to_string(),
@@ -126,7 +124,9 @@ impl DocumentRetriever for RedHatCsafRetriever {
 
         // Build the CSAF JSON URL for retrieved_from
         // Format: https://security.access.redhat.com/data/csaf/v2/vex/{year}/{cve}.json
-        let retrieved_from = self.build_csaf_json_url(&cve_id).unwrap_or_else(|| url.clone());
+        let retrieved_from = self
+            .build_csaf_json_url(&cve_id)
+            .unwrap_or_else(|| url.clone());
 
         Ok(RetrievedDocument {
             retrieved_from,

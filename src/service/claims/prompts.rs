@@ -88,6 +88,8 @@ Return an empty array if no valid security claims exist."#,
         doc.retrieved_from,
         doc.retriever,
         &doc.canonical_url,
-        doc.normalized_content.as_deref().unwrap_or(&doc.raw_content)
+        doc.normalized_content
+            .as_deref()
+            .unwrap_or(&doc.raw_content)
     )
 }

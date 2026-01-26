@@ -3,9 +3,9 @@
 use futures::future::join_all;
 use url::Url;
 
+use crate::db::DbError;
 use crate::db::models::{ListDocumentsQuery, PaginatedDocuments};
 use crate::db::repository::ReferenceDocumentRepository;
-use crate::db::DbError;
 use crate::model::{ReferenceDocument, RetrieverConfig};
 use crate::retriever::{RetrieverDispatcher, RetrieverError};
 use crate::service::cache::VulnerabilityCache;

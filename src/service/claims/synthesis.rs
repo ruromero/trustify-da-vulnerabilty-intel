@@ -15,7 +15,10 @@ pub fn synthesize_claims(claims: Vec<SourceClaim>) -> Vec<SourceClaim> {
     let mut by_reason: HashMap<SourceClaimReason, Vec<SourceClaim>> = HashMap::new();
 
     for claim in claims {
-        by_reason.entry(claim.reason.clone()).or_default().push(claim);
+        by_reason
+            .entry(claim.reason.clone())
+            .or_default()
+            .push(claim);
     }
 
     let mut synthesized = Vec::new();
@@ -27,9 +30,9 @@ pub fn synthesize_claims(claims: Vec<SourceClaim>) -> Vec<SourceClaim> {
 
         for claim in reason_claims {
             // Find a group with similar semantic meaning
-            let group_index = groups.iter().position(|group| {
-                are_semantically_similar(&claim, &group[0])
-            });
+            let group_index = groups
+                .iter()
+                .position(|group| are_semantically_similar(&claim, &group[0]));
 
             match group_index {
                 Some(idx) => {
@@ -139,7 +142,10 @@ fn merge_claim_group(mut group: Vec<SourceClaim>) -> SourceClaim {
 
     for claim in group {
         for evidence in claim.evidence {
-            let evidence_key = format!("{}:{}", evidence.reference_id.source, evidence.reference_id.id);
+            let evidence_key = format!(
+                "{}:{}",
+                evidence.reference_id.source, evidence.reference_id.id
+            );
             if !seen_evidence_ids.contains(&evidence_key) {
                 merged.evidence.push(evidence);
                 seen_evidence_ids.insert(evidence_key);
@@ -147,10 +153,10 @@ fn merge_claim_group(mut group: Vec<SourceClaim>) -> SourceClaim {
         }
 
         // Merge rationale if the merged one is empty or shorter
-        if let Some(ref other_rationale) = claim.rationale {
-            if merged.rationale.as_ref().map(|r| r.len()).unwrap_or(0) < other_rationale.len() {
-                merged.rationale = Some(other_rationale.clone());
-            }
+        if let Some(ref other_rationale) = claim.rationale
+            && merged.rationale.as_ref().map(|r| r.len()).unwrap_or(0) < other_rationale.len()
+        {
+            merged.rationale = Some(other_rationale.clone());
         }
     }
 

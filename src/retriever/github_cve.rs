@@ -7,7 +7,7 @@ use reqwest::Client;
 use serde::Deserialize;
 use url::Url;
 
-use super::{extract_domain, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain};
 use crate::model::{ContentType, ReferenceMetadata, RetrieverType};
 
 /// Retriever for GitHub CVE data from CVEProject/cvelistV5
@@ -81,12 +81,10 @@ struct CnaContainer {
 impl DocumentRetriever for GitHubCveRetriever {
     fn can_handle(&self, url: &Url) -> bool {
         // Handle URLs to CVEProject/cvelistV5 or direct CVE references
-        let is_cveproject = url.host_str().map_or(false, |h| {
+        url.host_str().is_some_and(|h| {
             (h == "github.com" || h == "raw.githubusercontent.com")
                 && url.path().contains("CVEProject/cvelistV5")
-        });
-
-        is_cveproject
+        })
     }
 
     fn retriever_type(&self) -> RetrieverType {
@@ -102,9 +100,8 @@ impl DocumentRetriever for GitHubCveRetriever {
         let fetch_url = if url.host_str() == Some("raw.githubusercontent.com") {
             url.clone()
         } else {
-            self.build_cve_url(&cve_id).ok_or_else(|| {
-                RetrieverError::ParseError("Could not build CVE URL".to_string())
-            })?
+            self.build_cve_url(&cve_id)
+                .ok_or_else(|| RetrieverError::ParseError("Could not build CVE URL".to_string()))?
         };
 
         tracing::debug!(url = %fetch_url, cve_id = %cve_id, "Fetching CVE JSON");
@@ -181,9 +178,7 @@ impl DocumentRetriever for GitHubCveRetriever {
                 tags: vec![],
                 labels: vec![],
                 issue_number: None,
-                repository: Some(
-                    Url::parse("https://github.com/CVEProject/cvelistV5").unwrap(),
-                ),
+                repository: Some(Url::parse("https://github.com/CVEProject/cvelistV5").unwrap()),
                 file_changes: vec![],
                 code_snippets: vec![],
                 comments: vec![],

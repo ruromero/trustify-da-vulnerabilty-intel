@@ -6,7 +6,9 @@ use reqwest::Client;
 use scraper::{Html, Selector};
 use url::Url;
 
-use super::{extract_domain, html_to_markdown, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{
+    DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain, html_to_markdown,
+};
 use crate::model::{CodeSnippet, ContentType, ReferenceMetadata, RetrieverType};
 
 /// Generic retriever for web pages with enhanced metadata extraction
@@ -27,12 +29,12 @@ impl GenericWebRetriever {
     /// Extract title from <title> or <meta property="og:title">
     fn extract_title(&self, document: &Html) -> Option<String> {
         // Try <title> first
-        if let Ok(selector) = Selector::parse("title") {
-            if let Some(el) = document.select(&selector).next() {
-                let title = el.text().collect::<String>().trim().to_string();
-                if !title.is_empty() {
-                    return Some(title);
-                }
+        if let Ok(selector) = Selector::parse("title")
+            && let Some(el) = document.select(&selector).next()
+        {
+            let title = el.text().collect::<String>().trim().to_string();
+            if !title.is_empty() {
+                return Some(title);
             }
         }
 
@@ -56,17 +58,17 @@ impl GenericWebRetriever {
         }
 
         // <meta property="article:author">
-        if let Some(author) = self.extract_meta_property(document, "article:author") {
-            if !authors.contains(&author) {
-                authors.push(author);
-            }
+        if let Some(author) = self.extract_meta_property(document, "article:author")
+            && !authors.contains(&author)
+        {
+            authors.push(author);
         }
 
         // <meta name="dc.creator"> (Dublin Core)
-        if let Some(author) = self.extract_meta_name(document, "dc.creator") {
-            if !authors.contains(&author) {
-                authors.push(author);
-            }
+        if let Some(author) = self.extract_meta_name(document, "dc.creator")
+            && !authors.contains(&author)
+        {
+            authors.push(author);
         }
 
         authors
@@ -113,20 +115,17 @@ impl GenericWebRetriever {
                 }
 
                 // Try to extract language from class attribute
-                let language = element
-                    .value()
-                    .attr("class")
-                    .and_then(|class| {
-                        class.split_whitespace().find_map(|c| {
-                            if c.starts_with("language-") {
-                                Some(c.strip_prefix("language-").unwrap().to_string())
-                            } else if c.starts_with("lang-") {
-                                Some(c.strip_prefix("lang-").unwrap().to_string())
-                            } else {
-                                None
-                            }
-                        })
-                    });
+                let language = element.value().attr("class").and_then(|class| {
+                    class.split_whitespace().find_map(|c| {
+                        if c.starts_with("language-") {
+                            Some(c.strip_prefix("language-").unwrap().to_string())
+                        } else if c.starts_with("lang-") {
+                            Some(c.strip_prefix("lang-").unwrap().to_string())
+                        } else {
+                            None
+                        }
+                    })
+                });
 
                 snippets.push(CodeSnippet {
                     language,
@@ -156,18 +155,18 @@ impl GenericWebRetriever {
     /// Helper: Extract content from <meta name="...">
     fn extract_meta_name(&self, document: &Html, name: &str) -> Option<String> {
         let selector_str = format!("meta[name=\"{}\"]", name);
-        if let Ok(selector) = Selector::parse(&selector_str) {
-            if let Some(el) = document.select(&selector).next() {
-                return el.value().attr("content").map(|s| s.trim().to_string());
-            }
+        if let Ok(selector) = Selector::parse(&selector_str)
+            && let Some(el) = document.select(&selector).next()
+        {
+            return el.value().attr("content").map(|s| s.trim().to_string());
         }
 
         // Also try case-insensitive match
         let selector_str_lower = format!("meta[name=\"{}\"]", name.to_lowercase());
-        if let Ok(selector) = Selector::parse(&selector_str_lower) {
-            if let Some(el) = document.select(&selector).next() {
-                return el.value().attr("content").map(|s| s.trim().to_string());
-            }
+        if let Ok(selector) = Selector::parse(&selector_str_lower)
+            && let Some(el) = document.select(&selector).next()
+        {
+            return el.value().attr("content").map(|s| s.trim().to_string());
         }
 
         None
@@ -176,10 +175,10 @@ impl GenericWebRetriever {
     /// Helper: Extract content from <meta property="...">
     fn extract_meta_property(&self, document: &Html, property: &str) -> Option<String> {
         let selector_str = format!("meta[property=\"{}\"]", property);
-        if let Ok(selector) = Selector::parse(&selector_str) {
-            if let Some(el) = document.select(&selector).next() {
-                return el.value().attr("content").map(|s| s.trim().to_string());
-            }
+        if let Ok(selector) = Selector::parse(&selector_str)
+            && let Some(el) = document.select(&selector).next()
+        {
+            return el.value().attr("content").map(|s| s.trim().to_string());
         }
         None
     }

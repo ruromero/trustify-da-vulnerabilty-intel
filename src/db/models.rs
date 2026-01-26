@@ -27,8 +27,10 @@ pub struct ReferenceDocumentRow {
 impl ReferenceDocumentRow {
     /// Convert database row to domain model
     pub fn into_domain(self) -> Result<ReferenceDocument, String> {
-        let retrieved_from = Url::parse(&self.retrieved_from).map_err(|e| format!("Invalid retrieved_from URL: {}", e))?;
-        let canonical_url = Url::parse(&self.canonical_url).map_err(|e| format!("Invalid canonical URL: {}", e))?;
+        let retrieved_from = Url::parse(&self.retrieved_from)
+            .map_err(|e| format!("Invalid retrieved_from URL: {}", e))?;
+        let canonical_url =
+            Url::parse(&self.canonical_url).map_err(|e| format!("Invalid canonical URL: {}", e))?;
         let domain_url = self.domain_url.as_ref().and_then(|u| Url::parse(u).ok());
 
         let retriever = match self.retriever_type.as_str() {

@@ -10,7 +10,7 @@ use reqwest::Client;
 use serde::Deserialize;
 use url::Url;
 
-use super::{extract_domain, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain};
 use crate::model::{ContentType, ReferenceMetadata, RetrieverType};
 
 const CVE_API_BASE: &str = "https://cveawg.mitre.org/api/cve";
@@ -74,11 +74,11 @@ impl CveOrgRetriever {
             }
         }
         // If no English description found, use first available
-        if content.ends_with("## Description\n\n") {
-            if let Some(desc) = record.containers.cna.descriptions.first() {
-                content.push_str(&desc.value);
-                content.push_str("\n\n");
-            }
+        if content.ends_with("## Description\n\n")
+            && let Some(desc) = record.containers.cna.descriptions.first()
+        {
+            content.push_str(&desc.value);
+            content.push_str("\n\n");
         }
 
         // Problem types (CWE)

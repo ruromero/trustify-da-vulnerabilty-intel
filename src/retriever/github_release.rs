@@ -7,7 +7,7 @@ use reqwest::Client;
 use serde::Deserialize;
 use url::Url;
 
-use super::{extract_domain, is_github_url, DocumentRetriever, RetrievedDocument, RetrieverError};
+use super::{DocumentRetriever, RetrievedDocument, RetrieverError, extract_domain, is_github_url};
 use crate::model::{ContentType, ReferenceMetadata, RetrieverType};
 
 /// Retriever for GitHub Releases
@@ -135,17 +135,17 @@ impl DocumentRetriever for GitHubReleaseRetriever {
             "# {}\n\n**Tag:** {}\n**Author:** {}\n\n---\n\n{}",
             title,
             release.tag_name,
-            release.author.as_ref().map(|a| a.login.as_str()).unwrap_or("Unknown"),
+            release
+                .author
+                .as_ref()
+                .map(|a| a.login.as_str())
+                .unwrap_or("Unknown"),
             release.body.as_deref().unwrap_or("")
         );
 
-        let authors = release
-            .author
-            .map(|a| vec![a.login])
-            .unwrap_or_default();
+        let authors = release.author.map(|a| vec![a.login]).unwrap_or_default();
 
-        let retrieved_from = Url::parse(&api_url)
-            .unwrap_or_else(|_| url.clone());
+        let retrieved_from = Url::parse(&api_url).unwrap_or_else(|_| url.clone());
 
         Ok(RetrievedDocument {
             retrieved_from,
