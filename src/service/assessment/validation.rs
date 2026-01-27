@@ -177,37 +177,51 @@ mod tests {
     use super::*;
     use crate::model::assessments::*;
     use crate::model::{
-        ClaimCertainty, ClaimEvidence, CveIdentity, PackageIdentity, SourceClaim,
-        SourceClaimReason,
+        ClaimCertainty, ClaimEvidence, CveIdentity, PackageIdentity, PackageMetadata, ReferenceId,
+        Scope, SourceClaim, SourceClaimReason, SourceType, TrustLevel,
     };
+    use chrono::Utc;
 
     fn create_test_intel() -> VulnerabilityIntel {
         VulnerabilityIntel {
             cve_identity: CveIdentity {
                 cve: "CVE-2024-1234".to_string(),
                 description: "Test vulnerability".to_string(),
+                aliases: vec![],
                 cvss_vectors: vec![],
-                severity: None,
+                references: vec![],
+                published: Utc::now(),
+                last_modified: Utc::now(),
+            },
+            package_metadata: PackageMetadata {
+                source_repo: None,
+                homepage: None,
+                issue_tracker: None,
+                licenses: vec![],
             },
             package_identity: PackageIdentity {
                 purl: url::Url::parse("pkg:maven/test/package@1.0.0").unwrap(),
-                dependency_graph: None,
-                scope: None,
+                dependency_graph: vec![],
+                scope: Scope::Runtime,
             },
             claims: vec![SourceClaim {
                 reason: SourceClaimReason::Exploitability,
                 certainty: ClaimCertainty::Strong,
                 evidence: vec![ClaimEvidence {
-                    source_type: crate::model::SourceType::Osv,
-                    source_id: "test".to_string(),
+                    reference_id: ReferenceId {
+                        source: "https://test.example.com".to_string(),
+                        id: "test-doc-1".to_string(),
+                    },
+                    trust_level: TrustLevel::High,
                     excerpt: Some("The vulnerability can be exploited remotely".to_string()),
-                    rationale: Some("Exploitability claim".to_string()),
-                    trust_level: crate::model::TrustLevel::Trusted,
+                    source_roles: vec![SourceType::Advisory],
                 }],
+                rationale: Some("Exploitability claim".to_string()),
             }],
             affected_versions: vec![],
             fixed_versions: vec![],
             vendor_remediations: vec![],
+            reference_ids: vec!["test-doc-1".to_string()],
         }
     }
 
