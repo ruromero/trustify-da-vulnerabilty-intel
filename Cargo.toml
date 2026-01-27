@@ -1,5 +1,5 @@
 [package]
-name = "trustify-da-agents"
+name = "trustify-vulnerability-intel"
 version = "0.1.0"
 edition = "2024"
 

@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This guide covers all configuration options for Trustify DA Agents.
+This guide covers all configuration options for Trustify Vulnerability Intelligence.
 
 ## Configuration Sources
 
@@ -141,10 +141,10 @@ export RUST_LOG="info"
 **Module-Specific Logging**:
 ```bash
 # Enable debug logs for specific modules
-export RUST_LOG="trustify_da_agents=debug,sqlx=warn,actix_web=info"
+export RUST_LOG="trustify_vulnerability_intel=debug,sqlx=warn,actix_web=info"
 
 # Enable trace for specific service
-export RUST_LOG="trustify_da_agents::service::vulnerability=trace"
+export RUST_LOG="trustify_vulnerability_intel::service::vulnerability=trace"
 ```
 
 ## Config File
@@ -268,7 +268,7 @@ retriever:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: trustify-da-agents-config
+  name: trustify-vulnerability-intel-config
 data:
   config.yaml: |
     retriever:
@@ -290,7 +290,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: trustify-da-agents-secrets
+  name: trustify-vulnerability-intel-secrets
 type: Opaque
 stringData:
   OPENAI_API_KEY: "sk-..."
@@ -304,14 +304,14 @@ stringData:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: trustify-da-agents
+  name: trustify-vulnerability-intel
 spec:
   replicas: 2
   template:
     spec:
       containers:
-      - name: trustify-da-agents
-        image: trustify-da-agents:latest
+      - name: trustify-vulnerability-intel
+        image: trustify-vulnerability-intel:latest
         env:
         # Server
         - name: HOST
@@ -328,7 +328,7 @@ spec:
         - name: DA_AGENT_POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: trustify-da-agents-secrets
+              name: trustify-vulnerability-intel-secrets
               key: DA_AGENT_POSTGRES_PASSWORD
         - name: DA_AGENT_POSTGRES_DB
           value: "da_agent"
@@ -340,7 +340,7 @@ spec:
         - name: DA_AGENT_REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: trustify-da-agents-secrets
+              name: trustify-vulnerability-intel-secrets
               key: DA_AGENT_REDIS_PASSWORD
         - name: DA_AGENT_CACHE_TTL
           value: "7200"  # 2 hours in production
@@ -348,7 +348,7 @@ spec:
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
-              name: trustify-da-agents-secrets
+              name: trustify-vulnerability-intel-secrets
               key: OPENAI_API_KEY
         - name: ASSESSMENT_MODEL
           value: "gpt-4o-mini"
@@ -356,7 +356,7 @@ spec:
         - name: GITHUB_TOKEN
           valueFrom:
             secretKeyRef:
-              name: trustify-da-agents-secrets
+              name: trustify-vulnerability-intel-secrets
               key: GITHUB_TOKEN
         # Logging
         - name: RUST_LOG
@@ -368,7 +368,7 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: trustify-da-agents-config
+          name: trustify-vulnerability-intel-config
 ```
 
 ## Validation
@@ -395,17 +395,17 @@ curl https://api.openai.com/v1/models \
 When the service starts, check logs for configuration confirmation:
 
 ```
-INFO trustify_da_agents: Connecting to PostgreSQL host=localhost port=5432
-INFO trustify_da_agents: PostgreSQL connection established
-INFO trustify_da_agents: Connecting to Redis host=localhost port=6379
-INFO trustify_da_agents: Redis connection established
-INFO trustify_da_agents::service::remediation: Remediation service initialized model=gpt-4o-mini
-INFO trustify_da_agents: Starting Trustify DA Agents server on 0.0.0.0:8080
+INFO trustify_vulnerability_intel: Connecting to PostgreSQL host=localhost port=5432
+INFO trustify_vulnerability_intel: PostgreSQL connection established
+INFO trustify_vulnerability_intel: Connecting to Redis host=localhost port=6379
+INFO trustify_vulnerability_intel: Redis connection established
+INFO trustify_vulnerability_intel::service::remediation: Remediation service initialized model=gpt-4o-mini
+INFO trustify_vulnerability_intel: Starting Trustify Vulnerability Intelligence server on 0.0.0.0:8080
 ```
 
 **Warning Messages** (non-critical):
 ```
-WARN trustify_da_agents: Redis cache unavailable, running without cache
+WARN trustify_vulnerability_intel: Redis cache unavailable, running without cache
 ```
 This is OK - the service will work without Redis, just with reduced performance.
 

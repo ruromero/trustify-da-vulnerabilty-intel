@@ -1,4 +1,4 @@
-# Example configuration file for DA Agents
+# Example configuration file for Trustify Vulnerability Intelligence
 # Copy to config.yaml and modify as needed
 # Set DA_AGENT_CONFIG_PATH environment variable to use a different path
 

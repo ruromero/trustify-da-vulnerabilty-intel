@@ -1,4 +1,4 @@
-# Trustify DA Agents - Documentation
+# Trustify Vulnerability Intelligence - Documentation
 
 **Status**: Production-ready
 **Last Updated**: 2026-01-27

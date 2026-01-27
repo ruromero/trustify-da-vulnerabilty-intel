@@ -2,7 +2,6 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// LLM-extracted remediation action structure
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

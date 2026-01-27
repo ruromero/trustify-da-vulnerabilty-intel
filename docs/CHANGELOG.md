@@ -1,4 +1,4 @@
-# Trustify DA Agents - Implementation Changelog
+# Trustify Vulnerability Intelligence - Implementation Changelog
 
 **Project Status**: Production-ready
 **Last Updated**: 2026-01-27

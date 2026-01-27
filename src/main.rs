@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
     let remediation_service = web::Data::new(state.remediation_service);
     let document_service_data = web::Data::from(state.document_service.clone());
 
-    tracing::info!("Starting Trustify DA Agents server on {}", bind_addr);
+    tracing::info!("Starting Trustify Vulnerability Intelligence server on {}", bind_addr);
 
     HttpServer::new(move || {
         App::new()

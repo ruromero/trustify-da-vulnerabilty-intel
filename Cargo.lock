@@ -3596,7 +3596,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "trustify-da-agents"
+name = "trustify-vulnerability-intel"
 version = "0.1.0"
 dependencies = [
  "actix-web",

@@ -1,10 +1,10 @@
-# Trustify DA Agents
+# Trustify Vulnerability Intelligence
 
 A Rust-based vulnerability intelligence service that helps AI-assisted IDEs provide actionable remediation guidance for security vulnerabilities in project dependencies.
 
 ## What is this?
 
-Trustify DA Agents is a REST service designed as a backend for MCP (Model Context Protocol) servers integrated with AI-assisted IDEs. When developers discover vulnerabilities in their dependencies, this service provides:
+Trustify Vulnerability Intelligence is a REST service designed as a backend for MCP (Model Context Protocol) servers integrated with AI-assisted IDEs. When developers discover vulnerabilities in their dependencies, this service provides:
 
 - **Comprehensive Vulnerability Assessments**: LLM-powered analysis of exploitability, impact, and confidence
 - **Actionable Remediation Plans**: Step-by-step instructions for fixing vulnerabilities
@@ -365,7 +365,7 @@ cargo test -- --ignored
 cargo build --release
 
 # Binary location
-./target/release/trustify-da-agents
+./target/release/trustify-vulnerability-intel
 ```
 
 ### Code Quality
