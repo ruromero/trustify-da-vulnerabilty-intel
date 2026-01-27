@@ -207,33 +207,146 @@ Vendor remediations may apply only to specific products or distributions.
 
 ---
 
-### Required Output
+### Required JSON Schema
 
-Produce structured JSON containing:
+You MUST return valid JSON conforming to this exact schema:
 
-### 1. Exploitability
-- status: exploitable | conditionally_exploitable | not_exploitable | unknown
-- certainty
-- conditions (if applicable)
-- notes (optional)
-- supported_by: list of claim IDs
-
-### 2. Impact
-- severity: low | medium | high | critical | unknown
-- confidentiality, integrity, availability
-- notes (optional)
-- supported_by: list of claim IDs
-
-### 3. Limitations
-- reason
-- description
-- supported_by (optional claim IDs)
+```json
+{{
+  "exploitability": {{
+    "status": "exploitable" | "conditionally_exploitable" | "not_exploitable" | "unknown",
+    "certainty": "strong" | "conditional" | "indicative" | "identification_only",
+    "conditions": ["condition1", "condition2"],
+    "notes": "brief explanation (optional)",
+    "supported_by": ["claim excerpt 1", "claim excerpt 2"]
+  }},
+  "impact": {{
+    "severity": "low" | "medium" | "high" | "critical" | "unknown",
+    "confidentiality": "none" | "low" | "medium" | "high" | "critical",
+    "integrity": "none" | "low" | "medium" | "high" | "critical",
+    "availability": "none" | "low" | "medium" | "high" | "critical",
+    "notes": "brief explanation (optional)",
+    "supported_by": ["claim excerpt 1", "claim excerpt 2"]
+  }},
+  "limitations": [
+    {{
+      "reason": "insufficient_data" | "runtime_dependent" | "environment_specific" | "conflicting_data",
+      "description": "clear explanation (at least 10 characters)",
+      "supported_by": ["claim excerpt"] (optional)
+    }}
+  ],
+  "reasoning": "step-by-step explanation of how conclusions were reached (optional but recommended)"
+}}
+```
 
 Guidelines:
-- If evidence is insufficient, use "unknown" and explain why
+- Every non-unknown status MUST have supporting evidence in `supported_by`
+- If evidence is insufficient, use "unknown" and explain why in limitations
 - Do not repeat CVSS text unless supported by claims
 - Prefer concrete impacts over abstract severity language
 - Do not include remediation recommendations
+
+CRITICAL: Return ONLY valid JSON. No explanations outside the JSON structure.
+
+## Examples
+
+### Example 1: Clear Exploitability with Evidence
+
+**Claims provided:**
+- Exploitability: "An attacker can exploit this by sending a malicious XML payload containing an XXE attack."
+- Impact: "This allows remote code execution and access to sensitive files."
+
+**Correct Output:**
+```json
+{{
+  "exploitability": {{
+    "status": "exploitable",
+    "certainty": "strong",
+    "conditions": [],
+    "notes": "Direct exploitation via malicious XML payloads",
+    "supported_by": ["An attacker can exploit this by sending a malicious XML payload containing an XXE attack."]
+  }},
+  "impact": {{
+    "severity": "critical",
+    "confidentiality": "high",
+    "integrity": "medium",
+    "availability": "low",
+    "notes": "Remote code execution enables file access",
+    "supported_by": ["This allows remote code execution and access to sensitive files."]
+  }},
+  "limitations": [],
+  "reasoning": "Claims explicitly describe XXE exploitation method and RCE impact. High confidence due to detailed attack description."
+}}
+```
+
+### Example 2: Insufficient Evidence
+
+**Claims provided:**
+- Identification: "CVE-2024-1234 affects the XML parser in versions 1.0 to 2.5."
+
+**Correct Output:**
+```json
+{{
+  "exploitability": {{
+    "status": "unknown",
+    "certainty": "identification_only",
+    "conditions": [],
+    "notes": null,
+    "supported_by": []
+  }},
+  "impact": {{
+    "severity": "unknown",
+    "confidentiality": null,
+    "integrity": null,
+    "availability": null,
+    "notes": null,
+    "supported_by": []
+  }},
+  "limitations": [
+    {{
+      "reason": "insufficient_data",
+      "description": "No claims describe exploitability or impact. Only vulnerability identification provided.",
+      "supported_by": null
+    }}
+  ],
+  "reasoning": "Only identification claim available. No evidence for exploitation method or consequences."
+}}
+```
+
+### Example 3: Conditional Exploitability
+
+**Claims provided:**
+- Exploitability: "The vulnerability can be exploited when external entity processing is enabled in the XML parser configuration."
+- Impact: "Exploitation may lead to denial of service through XML bomb attacks."
+
+**Correct Output:**
+```json
+{{
+  "exploitability": {{
+    "status": "conditionally_exploitable",
+    "certainty": "conditional",
+    "conditions": ["External entity processing must be enabled in XML parser"],
+    "notes": "Requires specific parser configuration",
+    "supported_by": ["The vulnerability can be exploited when external entity processing is enabled in the XML parser configuration."]
+  }},
+  "impact": {{
+    "severity": "medium",
+    "confidentiality": "none",
+    "integrity": "none",
+    "availability": "high",
+    "notes": "Denial of service via XML bomb attacks",
+    "supported_by": ["Exploitation may lead to denial of service through XML bomb attacks."]
+  }},
+  "limitations": [
+    {{
+      "reason": "environment_specific",
+      "description": "Impact depends on whether external entity processing is enabled, which varies by deployment.",
+      "supported_by": null
+    }}
+  ],
+  "reasoning": "Exploitability requires specific configuration (external entities enabled). Impact is DoS, affecting availability only. Conditional certainty due to configuration dependency."
+}}
+```
 
 Output JSON only."#,
         cve_id = cve_id,

@@ -80,15 +80,176 @@ Fixed Versions:
 
 Recommended Fixed Version: {}
 
-Generate:
-1. Instructions: Break down into domain-specific actions (dependency, code, configuration, build, annotation) with specific parameters.
-2. Preconditions: What must be true before applying this remediation (e.g., backups, test environment, dependencies).
-3. Expected Outcomes: What should happen after successful remediation (e.g., vulnerability patched, no breaking changes).
-4. Confirmation Risks must be user-facing decisions, not general warnings.
-  Examples:
-  - "This upgrade introduces a major version change"
-  - "This configuration change disables feature X"
-  - Avoid vague risks like "may cause issues".
+## Required JSON Schema
+
+You MUST return valid JSON conforming to this exact schema:
+
+```json
+{{
+  "instructions": [
+    {{
+      "domain": "dependency" | "code" | "configuration" | "build" | "test" | "annotation",
+      "action": "clear, actionable description (at least 10 characters)",
+      "parameters": {{
+        "package_name": "example-package",
+        "version": "1.2.3",
+        "file_path": "/path/to/file",
+        "key": "value"
+      }}
+    }}
+  ],
+  "preconditions": [
+    "Create backup of current state",
+    "Verify test environment available"
+  ],
+  "expected_outcomes": [
+    "Vulnerability CVE-2024-1234 is patched",
+    "All existing tests pass"
+  ],
+  "confirmation_risks": [
+    "This upgrade includes breaking API changes in feature X",
+    "This configuration disables legacy authentication method"
+  ],
+  "reasoning": "Step-by-step explanation of the remediation strategy and version selection (optional but recommended)"
+}}
+```
+
+Guidelines:
+1. Instructions: Break down into domain-specific actions with specific parameters
+2. Preconditions: What must be true before applying (backups, test environment, dependencies)
+3. Expected Outcomes: What should happen after successful remediation
+4. Confirmation Risks: User-facing decisions or breaking changes (NOT general warnings like "may cause issues")
+5. Reasoning: Explain WHY this remediation works and why the recommended version was selected
+
+CRITICAL: Return ONLY valid JSON. No explanations outside the JSON structure.
+
+## Examples
+
+### Example 1: Dependency Upgrade
+
+**Context:**
+- CVE: CVE-2024-1234 (buffer overflow in XML parser)
+- Package: xml-parser @ 2.3.0
+- Recommended Version: 3.24.1
+- Ecosystem: npm
+
+**Correct Output:**
+```json
+{{
+  "instructions": [
+    {{
+      "domain": "dependency",
+      "action": "Update xml-parser to version 3.24.1",
+      "parameters": {{
+        "package_name": "xml-parser",
+        "old_version": "2.3.0",
+        "new_version": "3.24.1",
+        "ecosystem": "npm"
+      }}
+    }},
+    {{
+      "domain": "test",
+      "action": "Run full test suite to verify compatibility",
+      "parameters": {{
+        "test_command": "npm test"
+      }}
+    }}
+  ],
+  "preconditions": [
+    "Create backup of package.json and package-lock.json",
+    "Verify Node.js version compatibility (requires >= 14.0.0)"
+  ],
+  "expected_outcomes": [
+    "CVE-2024-1234 buffer overflow vulnerability is patched",
+    "All existing tests pass without modification",
+    "Application behavior remains unchanged"
+  ],
+  "confirmation_risks": [
+    "This is a major version upgrade (2.x to 3.x) which may include breaking changes",
+    "Parser API has been redesigned - custom error handlers may need updates"
+  ],
+  "reasoning": "Version 3.24.1 is the lowest fixed version that patches CVE-2024-1234. The vulnerability is a buffer overflow in the parser that was fixed through a complete rewrite. Major version change indicates potential breaking changes in the API."
+}}
+```
+
+### Example 2: Configuration Change
+
+**Context:**
+- CVE: CVE-2024-5678 (XXE vulnerability)
+- Package: xml-processor @ 1.5.0
+- Remediation: Disable external entity processing
+- No upgrade available
+
+**Correct Output:**
+```json
+{{
+  "instructions": [
+    {{
+      "domain": "configuration",
+      "action": "Disable external entity processing in XML parser configuration",
+      "parameters": {{
+        "config_file": "config/xml-processor.yml",
+        "setting": "allow_external_entities",
+        "value": false
+      }}
+    }},
+    {{
+      "domain": "annotation",
+      "action": "Document the security configuration in code comments",
+      "parameters": {{
+        "location": "src/xml-handler.js",
+        "annotation": "External entities disabled to prevent CVE-2024-5678 XXE attacks"
+      }}
+    }}
+  ],
+  "preconditions": [
+    "Backup current configuration file",
+    "Verify application does not require external entity references"
+  ],
+  "expected_outcomes": [
+    "CVE-2024-5678 XXE vulnerability is mitigated",
+    "XML processing continues to work for internal documents",
+    "External entity references are rejected with clear error messages"
+  ],
+  "confirmation_risks": [
+    "This disables external entity references which may break XML documents that rely on external DTDs or entities"
+  ],
+  "reasoning": "CVE-2024-5678 is an XXE vulnerability exploitable when external entities are processed. Disabling external entity processing completely prevents the attack. This is a configuration-based mitigation since no patched version is available."
+}}
+```
+
+### Example 3: Invalid - Vague Risks (DO NOT DO THIS)
+
+**WRONG Output:**
+```json
+{{
+  "instructions": [...],
+  "preconditions": [...],
+  "expected_outcomes": [...],
+  "confirmation_risks": [
+    "This upgrade may cause issues",
+    "Breaking changes are possible",
+    "Test thoroughly before deploying"
+  ],
+  "reasoning": "..."
+}}
+```
+
+**Why it's wrong:** The confirmation risks are vague and non-specific.
+
+**CORRECT Output:**
+```json
+{{
+  "instructions": [...],
+  "preconditions": [...],
+  "expected_outcomes": [...],
+  "confirmation_risks": [
+    "This upgrade changes the default timeout from 30s to 5s which may cause failures for slow backends",
+    "The deprecated connectWithRetry() method is removed - use connect() with retry option instead"
+  ],
+  "reasoning": "..."
+}}
+```
 
 Remember: Focus on HOW to implement, not whether it's applicable."#,
         intel.package_identity.purl,

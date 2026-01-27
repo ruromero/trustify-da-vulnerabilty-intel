@@ -60,6 +60,122 @@ pub const EXTRACTION_SYSTEM_PROMPT: &str = r#"You are a security vulnerability a
 - Code refactoring or cleanup notes
 - Dependency alignment without security implications
 - Usage recommendations unless they mitigate a specific vulnerability
+
+## Required JSON Schema
+
+You MUST return valid JSON conforming to this exact schema:
+
+```json
+{
+  "claims": [
+    {
+      "reason": "identification" | "exploitability" | "impact" | "mitigation",
+      "certainty": "strong" | "conditional" | "indicative" | "identification_only",
+      "excerpt": "verbatim quote from document (1-3 sentences, must contain security terminology)",
+      "rationale": "factual explanation without meta-commentary (20-300 characters)"
+    }
+  ]
+}
+```
+
+Return `{"claims": []}` if no valid security claims exist.
+
+CRITICAL: Return ONLY valid JSON. No explanations outside the JSON structure.
+
+## Examples
+
+### Example 1: Valid Mitigation Claim
+
+**Document:**
+"CVE-2024-1234 is a buffer overflow vulnerability in the XML parser. Users can mitigate this by upgrading to version 3.24.1 or later, which includes a complete rewrite of the parser."
+
+**Correct Output:**
+```json
+{
+  "claims": [
+    {
+      "reason": "mitigation",
+      "certainty": "strong",
+      "excerpt": "Users can mitigate this by upgrading to version 3.24.1 or later, which includes a complete rewrite of the parser.",
+      "rationale": "Upgrading to version 3.24.1 or later fixes the buffer overflow vulnerability"
+    }
+  ]
+}
+```
+
+### Example 2: No Security Claims
+
+**Document:**
+"Version bump to 1.2.3. Also include Mutiny and Netty alignments. Backport of #48486."
+
+**Correct Output:**
+```json
+{
+  "claims": []
+}
+```
+
+**Explanation:** These are version bumps and backports without explicit security context. No security terminology present.
+
+### Example 3: Exploitability Claim
+
+**Document:**
+"CVE-2024-5678 allows remote code execution when the application processes untrusted XML input with external entity references enabled. An attacker can exploit this by sending a malicious XML payload containing an XXE attack."
+
+**Correct Output:**
+```json
+{
+  "claims": [
+    {
+      "reason": "exploitability",
+      "certainty": "strong",
+      "excerpt": "An attacker can exploit this by sending a malicious XML payload containing an XXE attack.",
+      "rationale": "The vulnerability can be exploited via malicious XML payloads with XXE attacks"
+    },
+    {
+      "reason": "exploitability",
+      "certainty": "conditional",
+      "excerpt": "CVE-2024-5678 allows remote code execution when the application processes untrusted XML input with external entity references enabled.",
+      "rationale": "Remote code execution is possible when external entity references are enabled"
+    }
+  ]
+}
+```
+
+### Example 4: Invalid - Meta-Commentary (DO NOT DO THIS)
+
+**Document:**
+"The vulnerability can be exploited by sending crafted HTTP headers."
+
+**WRONG Output:**
+```json
+{
+  "claims": [
+    {
+      "reason": "exploitability",
+      "certainty": "strong",
+      "excerpt": "The vulnerability can be exploited by sending crafted HTTP headers.",
+      "rationale": "This excerpt describes how the vulnerability can be exploited via HTTP headers"
+    }
+  ]
+}
+```
+
+**Why it's wrong:** The rationale uses meta-commentary ("This excerpt describes...").
+
+**CORRECT Output:**
+```json
+{
+  "claims": [
+    {
+      "reason": "exploitability",
+      "certainty": "strong",
+      "excerpt": "The vulnerability can be exploited by sending crafted HTTP headers.",
+      "rationale": "The vulnerability can be exploited via crafted HTTP headers"
+    }
+  ]
+}
+```
 "#;
 
 /// Build extraction prompt from document
@@ -78,13 +194,12 @@ pub fn build_extraction_prompt(cve_id: &str, doc: &ReferenceDocument) -> String 
 
 ---
 
-Extract all security-relevant claims from this document. Return structured JSON with:
-- reason: identification | exploitability | impact | mitigation
-- certainty: strong | conditional | indicative | identification_only
-- excerpt: verbatim text (1-3 sentences) that supports the claim
-- rationale: direct, factual explanation (no meta-commentary)
+Extract all security-relevant claims from this document.
 
-Return an empty array if no valid security claims exist."#,
+CRITICAL: You MUST return valid JSON matching the schema from the system prompt.
+Use the examples provided as guidance for proper formatting and content.
+
+Return {{"claims": []}} if no valid security claims exist in this document."#,
         doc.retrieved_from,
         doc.retriever,
         &doc.canonical_url,
