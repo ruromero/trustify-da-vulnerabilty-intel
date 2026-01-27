@@ -1,0 +1,667 @@
+{
+  "plan": {
+    "applicable": false,
+    "actions": [],
+    "options": [
+      {
+        "kind": "patch_upgrade",
+        "description": "PatchUpgrade (High confidence, vendor advisory): Upgrade to fixed version(s): 4d05b77f0699f28c83acb2195eaaea4855119c46, 3.24.1, d1a1739f3d14035670c1dcd294caeab0d153d79b, 3.20.2, d82adb34dbca3a2160954499d856128b1a63b6bc, 3.15.6",
+        "migration_guide": null,
+        "certainty": "strong"
+      },
+      {
+        "kind": "code_change",
+        "description": "CodeChange (High confidence, GitHub advisory): Code changes or workarounds suggested in mitigation claims",
+        "migration_guide": null,
+        "certainty": "strong"
+      },
+      {
+        "kind": "alternative_library",
+        "description": "AlternativeLibrary (High confidence, Red Hat): No fix available or no fix planned by vendor",
+        "migration_guide": null,
+        "certainty": "strong"
+      }
+    ],
+    "safe_defaults": [],
+    "confirmation_risks": [
+      "Not affected: vulnerable code not present in version 3.20.1 (version is outside affected range)"
+    ]
+  },
+  "intel": {
+    "intel": {
+      "cve_identity": {
+        "cve": "CVE-2025-49574",
+        "description": "Quarkus potential data leak when duplicating a duplicated context",
+        "aliases": [
+          "GHSA-9623-mj7j-p9v4"
+        ],
+        "cvss_vectors": [
+          {
+            "cvss_type": "v3",
+            "vector": "CVSS:3.1/AV:A/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N"
+          }
+        ],
+        "references": [
+          {
+            "url": "https://github.com/CVEProject/cvelistV5/tree/main/cves/2025/49xxx/CVE-2025-49574.json",
+            "source_type": "advisory"
+          },
+          {
+            "url": "https://github.com/quarkusio/quarkus/commit/2b58f59f4bf0bae7d35b1abb585b65f2a66787d1",
+            "source_type": "fix"
+          },
+          {
+            "url": "https://github.com/quarkusio/quarkus/commit/31e8a3bfcf4e223788615d5ce25eb929ca251275",
+            "source_type": "fix"
+          },
+          {
+            "url": "https://github.com/quarkusio/quarkus/commit/d1ee57e7b826872b6355cfec0ae13465840e232c",
+            "source_type": "fix"
+          },
+          {
+            "url": "https://github.com/quarkusio/quarkus/issues/48227",
+            "source_type": "report"
+          },
+          {
+            "url": "https://github.com/quarkusio/quarkus/pull/48486",
+            "source_type": "fix"
+          },
+          {
+            "url": "https://github.com/quarkusio/quarkus/releases/tag/3.24.1",
+            "source_type": "web"
+          },
+          {
+            "url": "https://github.com/quarkusio/quarkus/security/advisories/GHSA-9623-mj7j-p9v4",
+            "source_type": "advisory"
+          },
+          {
+            "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-49574",
+            "source_type": "advisory"
+          },
+          {
+            "url": "https://access.redhat.com/security/cve/CVE-2025-49574",
+            "source_type": "advisory"
+          },
+          {
+            "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2374376",
+            "source_type": "web"
+          },
+          {
+            "url": "https://www.cve.org/CVERecord?id=CVE-2025-49574",
+            "source_type": "web"
+          }
+        ],
+        "published": "2025-06-23T19:47:05.454Z",
+        "last_modified": "2025-12-24T04:56:28.984594Z"
+      },
+      "package_metadata": {
+        "source_repo": "https://github.com/quarkusio/quarkus",
+        "homepage": "https://github.com/quarkusio/quarkus",
+        "issue_tracker": "https://github.com/quarkusio/quarkus/issues/",
+        "licenses": [
+          "Apache-2.0"
+        ]
+      },
+      "package_identity": {
+        "purl": "pkg:maven/io.quarkus/quarkus-vertx@3.20.1",
+        "dependency_graph": [],
+        "scope": "runtime"
+      },
+      "affected_versions": [
+        {
+          "range_type": "git",
+          "introduced": "1336c91455a858b6b05d8472d2374514cf46b85a",
+          "last_affected": null,
+          "raw": null
+        },
+        {
+          "range_type": "semver",
+          "introduced": "3.21.0.CR1",
+          "last_affected": null,
+          "raw": null
+        },
+        {
+          "range_type": "git",
+          "introduced": "88cac017173e088e982d1676394fc0c80beff256",
+          "last_affected": null,
+          "raw": null
+        },
+        {
+          "range_type": "semver",
+          "introduced": "3.16.0.CR1",
+          "last_affected": null,
+          "raw": null
+        },
+        {
+          "range_type": "git",
+          "introduced": "0",
+          "last_affected": null,
+          "raw": null
+        },
+        {
+          "range_type": "semver",
+          "introduced": "0",
+          "last_affected": null,
+          "raw": null
+        }
+      ],
+      "fixed_versions": [
+        {
+          "range_type": "git",
+          "fixed": "4d05b77f0699f28c83acb2195eaaea4855119c46",
+          "raw": null
+        },
+        {
+          "range_type": "semver",
+          "fixed": "3.24.1",
+          "raw": null
+        },
+        {
+          "range_type": "git",
+          "fixed": "d1a1739f3d14035670c1dcd294caeab0d153d79b",
+          "raw": null
+        },
+        {
+          "range_type": "semver",
+          "fixed": "3.20.2",
+          "raw": null
+        },
+        {
+          "range_type": "git",
+          "fixed": "d82adb34dbca3a2160954499d856128b1a63b6bc",
+          "raw": null
+        },
+        {
+          "range_type": "semver",
+          "fixed": "3.15.6",
+          "raw": null
+        }
+      ],
+      "vendor_remediations": [
+        {
+          "vendor": "Red Hat",
+          "category": "vendor_fix",
+          "other_category": null,
+          "details": "Before applying this update, make sure all previously released errata\nrelevant to your system have been applied.\n\nFor details on how to apply this update, refer to:\n\nhttps://access.redhat.com/articles/11258",
+          "url": "https://access.redhat.com/errata/RHSA-2025:13012",
+          "product_ids": [
+            "Red Hat build of Quarkus 3.15.6"
+          ]
+        },
+        {
+          "vendor": "Red Hat",
+          "category": "vendor_fix",
+          "other_category": null,
+          "details": "Before applying this update, make sure all previously released errata\nrelevant to your system have been applied.\n\nFor details on how to apply this update, refer to:\n\nhttps://access.redhat.com/articles/11258",
+          "url": "https://access.redhat.com/errata/RHSA-2025:13010",
+          "product_ids": [
+            "Red Hat build of Quarkus 3.20.2"
+          ]
+        },
+        {
+          "vendor": "Red Hat",
+          "category": "vendor_fix",
+          "other_category": null,
+          "details": "Before applying this update, make sure all previously released errata\nrelevant to your system have been applied.\n\nFor details on how to apply this update, refer to:\n\nhttps://access.redhat.com/articles/11258",
+          "url": "https://access.redhat.com/errata/RHSA-2025:12511",
+          "product_ids": [
+            "Streams for Apache Kafka 3.0.0"
+          ]
+        },
+        {
+          "vendor": "Red Hat",
+          "category": "vendor_fix",
+          "other_category": null,
+          "details": "Before applying this update, make sure all previously released errata\nrelevant to your system have been applied.\n\nFor details on how to apply this update, refer to:\n\nhttps://access.redhat.com/articles/11258",
+          "url": "https://access.redhat.com/errata/RHSA-2025:23417",
+          "product_ids": [
+            "Streams for Apache Kafka 3.1.0"
+          ]
+        },
+        {
+          "vendor": "Red Hat",
+          "category": "workaround",
+          "other_category": null,
+          "details": "Mitigation for this issue is either not available or the currently available options do not meet the Red Hat Product Security criteria comprising ease of use and deployment, applicability to widespread installation base or stability.",
+          "url": null,
+          "product_ids": [
+            "Red Hat build of Quarkus 3.15.6",
+            "Red Hat build of Quarkus 3.20.2",
+            "Streams for Apache Kafka 3.0.0",
+            "Streams for Apache Kafka 3.1.0",
+            "cryostat_4:quarkus-vertx",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-dispatcher-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-kafka-controller-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-post-install-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-receiver-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-webhook-kafka-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-ddb-streams-source-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-s3-sink-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-s3-source-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-sns-sink-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-sqs-sink-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-sqs-source-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-log-sink-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-timer-source-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-transform-jsonata-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-istio-controller-rhel8",
+            "red_hat_build_of_apache_camel_-_hawtio_4:quarkus-vertx",
+            "red_hat_build_of_apache_camel_4_for_quarkus_3:quarkus-camel-bom",
+            "red_hat_build_of_apache_camel_4_for_quarkus_3:quarkus-cxf-bom",
+            "red_hat_build_of_apicurio_registry_2:quarkus-vertx",
+            "red_hat_build_of_apicurio_registry_3:quarkus-vertx",
+            "red_hat_build_of_debezium_2:quarkus-vertx",
+            "red_hat_build_of_debezium_3:quarkus-vertx",
+            "red_hat_build_of_optaplanner_8:quarkus-vertx",
+            "red_hat_data_grid_8:quarkus-vertx",
+            "red_hat_fuse_7:quarkus-vertx",
+            "red_hat_integration_camel_k_1:quarkus-vertx",
+            "red_hat_jboss_enterprise_application_platform_8:quarkus-vertx",
+            "red_hat_jboss_enterprise_application_platform_expansion_pack:quarkus-vertx",
+            "red_hat_openshift_ai_(rhoai):rhoai/odh-dashboard-rhel9",
+            "red_hat_openshift_ai_(rhoai):rhoai/odh-trustyai-service-rhel8",
+            "red_hat_openshift_ai_(rhoai):rhoai/odh-trustyai-service-rhel9",
+            "red_hat_process_automation_7:quarkus-vertx",
+            "streams_for_apache_kafka:quarkus-vertx",
+            "streams_for_apache_kafka_2:quarkus-vertx"
+          ]
+        },
+        {
+          "vendor": "Red Hat",
+          "category": "none_available",
+          "other_category": null,
+          "details": "Fix deferred",
+          "url": null,
+          "product_ids": [
+            "cryostat_4:quarkus-vertx",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-dispatcher-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-kafka-controller-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-post-install-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-receiver-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-ekb-webhook-kafka-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-ddb-streams-source-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-s3-sink-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-s3-source-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-sns-sink-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-sqs-sink-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-aws-sqs-source-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-log-sink-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-timer-source-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-integrations-transform-jsonata-rhel8",
+            "openshift_serverless:openshift-serverless-1/kn-eventing-istio-controller-rhel8",
+            "red_hat_build_of_apache_camel_-_hawtio_4:quarkus-vertx",
+            "red_hat_build_of_apache_camel_4_for_quarkus_3:quarkus-camel-bom",
+            "red_hat_build_of_apache_camel_4_for_quarkus_3:quarkus-cxf-bom",
+            "red_hat_build_of_apicurio_registry_2:quarkus-vertx",
+            "red_hat_build_of_apicurio_registry_3:quarkus-vertx",
+            "red_hat_build_of_debezium_2:quarkus-vertx",
+            "red_hat_build_of_debezium_3:quarkus-vertx",
+            "red_hat_build_of_optaplanner_8:quarkus-vertx",
+            "red_hat_data_grid_8:quarkus-vertx",
+            "red_hat_fuse_7:quarkus-vertx",
+            "red_hat_integration_camel_k_1:quarkus-vertx",
+            "red_hat_jboss_enterprise_application_platform_8:quarkus-vertx",
+            "red_hat_jboss_enterprise_application_platform_expansion_pack:quarkus-vertx",
+            "red_hat_openshift_ai_(rhoai):rhoai/odh-dashboard-rhel9",
+            "red_hat_openshift_ai_(rhoai):rhoai/odh-trustyai-service-rhel8",
+            "red_hat_openshift_ai_(rhoai):rhoai/odh-trustyai-service-rhel9",
+            "red_hat_process_automation_7:quarkus-vertx",
+            "streams_for_apache_kafka:quarkus-vertx",
+            "streams_for_apache_kafka_2:quarkus-vertx"
+          ]
+        }
+      ],
+      "claims": [
+        {
+          "reason": "impact",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/issues/48227",
+                "id": "b1493422e75c45e0e35ddf694357714965e0455cfbe153da0ac18c438710a1eb"
+              },
+              "trust_level": "medium",
+              "excerpt": "We observed that context data is leaking between different units of processing, leading to problems when analyzing operational issues.",
+              "source_roles": [
+                "discussion"
+              ]
+            }
+          ],
+          "rationale": "The vulnerability leads to data leakage between processes, potentially exposing sensitive information."
+        },
+        {
+          "reason": "impact",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/issues/48227",
+                "id": "b1493422e75c45e0e35ddf694357714965e0455cfbe153da0ac18c438710a1eb"
+              },
+              "trust_level": "medium",
+              "excerpt": "Context data is shared since Quarkus 3.18.1 as described above, leading to confusing or wrong logging and telemetry data.",
+              "source_roles": [
+                "discussion"
+              ]
+            }
+          ],
+          "rationale": "The flaw results in incorrect logging due to context data sharing, which can mislead operational decisions and troubleshooting efforts."
+        },
+        {
+          "reason": "impact",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://nvd.nist.gov/vuln/detail/CVE-2025-49574",
+                "id": "4133399a18116f4c65179d67730988a0d2e19769cd14ce736f4110d7c166da63"
+              },
+              "trust_level": "high",
+              "excerpt": "there is a potential data leak when duplicating a duplicated context.",
+              "source_roles": [
+                "advisory"
+              ]
+            },
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/security/advisories/GHSA-9623-mj7j-p9v4",
+                "id": "3b3141e156faab5076f94ec1c4130eb2601b92948ea95a8c077a9485accea1c3"
+              },
+              "trust_level": "medium",
+              "excerpt": "Quarkus potentially leaks data when duplicating a duplicated context",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "The change in semantics for the duplication of contexts allows data from one transaction to leak into another, posing a data confidentiality risk."
+        },
+        {
+          "reason": "impact",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/security/advisories/GHSA-9623-mj7j-p9v4",
+                "id": "3b3141e156faab5076f94ec1c4130eb2601b92948ea95a8c077a9485accea1c3"
+              },
+              "trust_level": "medium",
+              "excerpt": "A significant amount of data is stored in the duplicated context, including request scope, security details, and metadata.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "The exposure of request scope and security details increases the risk associated with this vulnerability, emphasizing its impact on data security."
+        },
+        {
+          "reason": "impact",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://access.redhat.com/security/cve/CVE-2025-49574",
+                "id": "b01493eda1c5bf4cf99904acc492d35853068e7c658f2484c63cd3bc1b65160d"
+              },
+              "trust_level": "high",
+              "excerpt": "In such a scenario, sensitive data residing within that context may be unintentionally exposed.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "The consequence of this flaw is information disclosure, highlighting the impact on data confidentiality."
+        },
+        {
+          "reason": "impact",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://www.cve.org/CVERecord?id=CVE-2025-49574",
+                "id": "893285b7330339eced43f18ae3978180dd54cf73f5439b98728a83c32991f85f"
+              },
+              "trust_level": "high",
+              "excerpt": "With the new semantic data from one transaction can leak to the data from another transaction.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "The flaw allows data leakage between transactions due to improper context duplication, leading to potential exposure of sensitive information."
+        },
+        {
+          "reason": "mitigation",
+          "certainty": "conditional",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/issues/48227",
+                "id": "b1493422e75c45e0e35ddf694357714965e0455cfbe153da0ac18c438710a1eb"
+              },
+              "trust_level": "medium",
+              "excerpt": "Maybe it might make sense to migrate the VertxMDC to use a custom ContextLocal as suggested in https://github.com/eclipse-vertx/vert.x/issues/5505.",
+              "source_roles": [
+                "discussion"
+              ]
+            }
+          ],
+          "rationale": "Migrating to a custom ContextLocal could mitigate the data leakage issue by ensuring that context data is not shared improperly between processes."
+        },
+        {
+          "reason": "mitigation",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/security/advisories/GHSA-9623-mj7j-p9v4",
+                "id": "3b3141e156faab5076f94ec1c4130eb2601b92948ea95a8c077a9485accea1c3"
+              },
+              "trust_level": "medium",
+              "excerpt": "When duplicating a duplicated context, the following code can be done to avoid the potential leak: ((ContextInternal) VertxContext.getRootContext(ctx)).duplicate()",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "This workaround directly addresses the vulnerability by providing a coding solution to prevent data leakage during context duplication."
+        },
+        {
+          "reason": "mitigation",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://nvd.nist.gov/vuln/detail/CVE-2025-49574",
+                "id": "4133399a18116f4c65179d67730988a0d2e19769cd14ce736f4110d7c166da63"
+              },
+              "trust_level": "high",
+              "excerpt": "This issue has been patched in version 3.24.1, 3.20.2, and 3.15.6.",
+              "source_roles": [
+                "advisory"
+              ]
+            },
+            {
+              "reference_id": {
+                "source": "https://www.cve.org/CVERecord?id=CVE-2025-49574",
+                "id": "893285b7330339eced43f18ae3978180dd54cf73f5439b98728a83c32991f85f"
+              },
+              "trust_level": "high",
+              "excerpt": "This issue has been patched in version 3.24.1, 3.20.2, and 3.15.6.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "Users should upgrade to these versions to fix the vulnerability and prevent data leakage."
+        },
+        {
+          "reason": "exploitability",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/issues/48227",
+                "id": "b1493422e75c45e0e35ddf694357714965e0455cfbe153da0ac18c438710a1eb"
+              },
+              "trust_level": "medium",
+              "excerpt": "The problem seems to be caused by the upgrade to Vertx 4.5.12, which contained a change in behavior regarding duplicated contexts.",
+              "source_roles": [
+                "discussion"
+              ]
+            }
+          ],
+          "rationale": "The change in context handling introduces the risk of leaking sensitive log data between processes, indicating a flaw in the system's design."
+        },
+        {
+          "reason": "exploitability",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/security/advisories/GHSA-9623-mj7j-p9v4",
+                "id": "3b3141e156faab5076f94ec1c4130eb2601b92948ea95a8c077a9485accea1c3"
+              },
+              "trust_level": "medium",
+              "excerpt": "In Vert.x 4.5.12, this semantics has changed, and since the content of the parent duplicated context is copied into the new one, potentially leaking data.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "This describes how the vulnerability leads to data leakage due to context duplication, outlining the change in behavior that facilitates exploitation."
+        },
+        {
+          "reason": "exploitability",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://access.redhat.com/security/cve/CVE-2025-49574",
+                "id": "b01493eda1c5bf4cf99904acc492d35853068e7c658f2484c63cd3bc1b65160d"
+              },
+              "trust_level": "high",
+              "excerpt": "This flaw can lead to information disclosure if a Vert.x context that has already been duplicated is subsequently duplicated again.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "Duplicating a previously duplicated Vert.x context risks unintentionally exposing sensitive data, indicating potential exploitability."
+        },
+        {
+          "reason": "identification",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://github.com/quarkusio/quarkus/pull/48486",
+                "id": "a71a667b30a5eb005fe22927e08e73772b004d0b332b89aed20e44b8d393957e"
+              },
+              "trust_level": "medium",
+              "excerpt": "Fix https://github.com/quarkusio/quarkus/security/advisories/GHSA-9623-mj7j-p9v4.",
+              "source_roles": [
+                "discussion"
+              ]
+            }
+          ],
+          "rationale": "This link leads to a security advisory that addresses vulnerabilities related to CVE-2025-49574, indicating it is a significant security concern that has been officially recognized."
+        },
+        {
+          "reason": "identification",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://nvd.nist.gov/vuln/detail/CVE-2025-49574",
+                "id": "4133399a18116f4c65179d67730988a0d2e19769cd14ce736f4110d7c166da63"
+              },
+              "trust_level": "high",
+              "excerpt": "A significant amount of data is stored in the duplicated context, including request scope, security details, and metadata.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "The vulnerability involves sensitive information being stored and potentially exposed through context duplication, highlighting the risk of data leaks."
+        },
+        {
+          "reason": "identification",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://access.redhat.com/security/cve/CVE-2025-49574",
+                "id": "b01493eda1c5bf4cf99904acc492d35853068e7c658f2484c63cd3bc1b65160d"
+              },
+              "trust_level": "high",
+              "excerpt": "A data leak vulnerability has been discovered in the io.quarkus:quarkus-vertx package.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "The vulnerability involves a data leak in the quarkus-vertx package which could lead to exposure of sensitive information."
+        },
+        {
+          "reason": "identification",
+          "certainty": "strong",
+          "evidence": [
+            {
+              "reference_id": {
+                "source": "https://www.cve.org/CVERecord?id=CVE-2025-49574",
+                "id": "893285b7330339eced43f18ae3978180dd54cf73f5439b98728a83c32991f85f"
+              },
+              "trust_level": "high",
+              "excerpt": "In versions prior to 3.24.1, 3.20.2, and 3.15.6, there is a potential data leak when duplicating a duplicated context.",
+              "source_roles": [
+                "advisory"
+              ]
+            }
+          ],
+          "rationale": "The vulnerability in specific versions of Quarkus allows for a potential data leak due to the duplication of contexts, which can expose sensitive information."
+        }
+      ],
+      "reference_ids": [
+        "d29136be90623940d4636d1351b43db2e40a5ad7b97c982114224fc86914c0c9",
+        "b8017dca86ed85be3558dd9cfb6954d315b2aa22fba807b4bcad5719c0e4f742",
+        "6c55c90ec2383dd5900e70d23aa9735359c7ff99360fb3669a227aad0f714d1c",
+        "b1493422e75c45e0e35ddf694357714965e0455cfbe153da0ac18c438710a1eb",
+        "a71a667b30a5eb005fe22927e08e73772b004d0b332b89aed20e44b8d393957e",
+        "4cf6ff308ba39aba441eb222ce91b7f1cb8c4c303dc57006d21ea4950862ec34",
+        "3b3141e156faab5076f94ec1c4130eb2601b92948ea95a8c077a9485accea1c3",
+        "4133399a18116f4c65179d67730988a0d2e19769cd14ce736f4110d7c166da63",
+        "b01493eda1c5bf4cf99904acc492d35853068e7c658f2484c63cd3bc1b65160d",
+        "893285b7330339eced43f18ae3978180dd54cf73f5439b98728a83c32991f85f"
+      ]
+    },
+    "exploitability": {
+      "status": "exploitable",
+      "certainty": "strong",
+      "conditions": [],
+      "notes": null
+    },
+    "impact": {
+      "severity": "high",
+      "confidentiality": "high",
+      "integrity": "high",
+      "availability": "none",
+      "notes": null
+    },
+    "confidence": {
+      "level": "high",
+      "score": 44.25,
+      "reason": "The high confidence level is clearly supported by the strong claims, with 15 out of 16 being classified as strong, and corroborated by 8 high trust sources. The single limitation does not materially affect confidence due to the predominantly strong support from the claims and sources, establishing a robust foundation for this assessment."
+    },
+    "limitations": [
+      {
+        "reason": "environment_specific",
+        "description": "The context of this vulnerability is based on specific behavior changes in the handling of duplicated contexts, which could vary in different environments or implementations."
+      }
+    ],
+    "generated_at": "2026-01-26T22:53:40.245690Z",
+    "retrieved_at": "2026-01-26T22:53:07.317131Z"
+  },
+  "request_id": "4296927e-8356-4bc2-84fe-4ea554468d40"
+}
