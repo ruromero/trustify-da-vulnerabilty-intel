@@ -29,13 +29,9 @@ pub struct ExtractedAssessment {
 #[schemars(description = "Assessment of exploitability based on provided claims")]
 pub struct ExtractedExploitability {
     /// Exploitability status
-    #[schemars(
-        description = "exploitable, conditionally_exploitable, not_exploitable, or unknown"
-    )]
     pub status: ExtractedExploitabilityStatus,
 
     /// Certainty of this assessment
-    #[schemars(description = "Confidence level in the exploitability assessment")]
     pub certainty: ExtractedCertainty,
 
     /// Conditions required for exploitation (if conditionally_exploitable)
@@ -55,7 +51,9 @@ pub struct ExtractedExploitability {
     pub supported_by: Vec<String>,
 }
 
+/// Exploitability status
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(description = "exploitable, conditionally_exploitable, not_exploitable, or unknown")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedExploitabilityStatus {
     Exploitable,
@@ -69,19 +67,15 @@ pub enum ExtractedExploitabilityStatus {
 #[schemars(description = "Assessment of the consequences if the vulnerability is exploited")]
 pub struct ExtractedImpact {
     /// Overall severity
-    #[schemars(description = "Overall impact severity: low, medium, high, critical, or unknown")]
     pub severity: ExtractedImpactSeverity,
 
     /// Confidentiality impact
-    #[schemars(description = "Impact on data confidentiality (none, low, medium, high, critical)")]
     pub confidentiality: Option<ExtractedImpactLevel>,
 
     /// Integrity impact
-    #[schemars(description = "Impact on data integrity (none, low, medium, high, critical)")]
     pub integrity: Option<ExtractedImpactLevel>,
 
     /// Availability impact
-    #[schemars(description = "Impact on system availability (none, low, medium, high, critical)")]
     pub availability: Option<ExtractedImpactLevel>,
 
     /// Additional explanatory notes
@@ -93,7 +87,9 @@ pub struct ExtractedImpact {
     pub supported_by: Vec<String>,
 }
 
+/// Impact severity level
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(description = "Overall impact severity: low, medium, high, critical, or unknown")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedImpactSeverity {
     Low,
@@ -103,7 +99,9 @@ pub enum ExtractedImpactSeverity {
     Unknown,
 }
 
+/// CIA impact level
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(description = "Impact level for confidentiality, integrity, or availability: none, low, medium, high, critical")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedImpactLevel {
     None,
@@ -118,9 +116,6 @@ pub enum ExtractedImpactLevel {
 #[schemars(description = "A known limitation, conflict, or uncertainty in the assessment")]
 pub struct ExtractedLimitation {
     /// Category of limitation
-    #[schemars(
-        description = "Type of limitation: insufficient_data, runtime_dependent, environment_specific, or conflicting_data"
-    )]
     pub reason: ExtractedLimitationReason,
 
     /// Detailed explanation of the limitation
@@ -134,7 +129,9 @@ pub struct ExtractedLimitation {
     pub supported_by: Option<Vec<String>>,
 }
 
+/// Reason for assessment limitation
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(description = "Type of limitation: insufficient_data, runtime_dependent, environment_specific, or conflicting_data")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedLimitationReason {
     InsufficientData,
@@ -143,7 +140,9 @@ pub enum ExtractedLimitationReason {
     ConflictingData,
 }
 
+/// Certainty level
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(description = "Confidence level: strong, conditional, indicative, or identification_only")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedCertainty {
     Conditional,

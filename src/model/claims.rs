@@ -16,15 +16,9 @@ pub struct ExtractedClaims {
 pub struct ExtractedClaim {
     /// Category of the claim
     #[serde(rename = "reason")]
-    #[schemars(
-        description = "Type of security claim: identification, exploitability, impact, or mitigation"
-    )]
     pub reason: ExtractedReason,
 
     /// Confidence level of the claim
-    #[schemars(
-        description = "Certainty level: strong (explicitly stated), conditional (true under conditions), indicative (suggested), or identification_only (basic identification)"
-    )]
     pub certainty: ExtractedCertainty,
 
     /// Verbatim excerpt from the document (1-3 sentences) that directly supports this claim
@@ -40,7 +34,9 @@ pub struct ExtractedClaim {
     pub rationale: String,
 }
 
+/// Type of security claim
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(description = "Type of security claim: identification, exploitability, impact, or mitigation")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedReason {
     Identification,
@@ -49,7 +45,9 @@ pub enum ExtractedReason {
     Mitigation,
 }
 
+/// Certainty level of a claim
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(description = "Certainty level: strong (explicitly stated), conditional (true under conditions), indicative (suggested), or identification_only (basic identification)")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedCertainty {
     Conditional,
