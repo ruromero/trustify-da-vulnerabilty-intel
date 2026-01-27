@@ -11,6 +11,7 @@ const OSV_API_BASE_URL: &str = "https://api.osv.dev/v1";
 const OSV_BASE_URL_ENV: &str = "OSV_BASE_URL";
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum OsvError {
     #[error("Vulnerability not found: {0}")]
     NotFound(String),

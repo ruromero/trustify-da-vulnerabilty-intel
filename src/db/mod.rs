@@ -22,6 +22,7 @@ const DEFAULT_POSTGRES_PASSWORD: &str = "da_agent";
 const DEFAULT_POSTGRES_DB: &str = "da_agent";
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum DbError {
     #[error("Database connection error: {0}")]
     Connection(#[from] sqlx::Error),

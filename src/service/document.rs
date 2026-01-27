@@ -11,6 +11,7 @@ use crate::retriever::{RetrieverDispatcher, RetrieverError};
 use crate::service::cache::VulnerabilityCache;
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum DocumentServiceError {
     #[error("Database error: {0}")]
     DbError(#[from] DbError),

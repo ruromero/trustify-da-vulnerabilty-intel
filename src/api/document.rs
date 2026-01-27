@@ -4,6 +4,7 @@ use actix_web::{HttpResponse, Responder, get, web};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
+use crate::api::error::ApiError;
 use crate::db::models::ListDocumentsQuery;
 use crate::service::DocumentService;
 
@@ -55,7 +56,7 @@ pub struct DocumentSummary {
 pub async fn list_documents(
     service: web::Data<DocumentService>,
     query: web::Query<ListDocumentsParams>,
-) -> impl Responder {
+) -> Result<impl Responder, ApiError> {
     let db_query = ListDocumentsQuery {
         page: query.page,
         page_size: query.page_size,
@@ -63,36 +64,27 @@ pub async fn list_documents(
         domain_url: query.domain_url.clone(),
     };
 
-    match service.list(db_query).await {
-        Ok(paginated) => {
-            let summaries: Vec<DocumentSummary> = paginated
-                .documents
-                .into_iter()
-                .map(|doc| DocumentSummary {
-                    id: doc.id,
-                    url: doc.canonical_url.to_string(),
-                    retriever_type: format!("{:?}", doc.retriever).to_lowercase(),
-                    title: doc.metadata.and_then(|m| m.title),
-                    retrieved_at: doc.retrieved_at.to_rfc3339(),
-                })
-                .collect();
+    let paginated = service.list(db_query).await?;
 
-            HttpResponse::Ok().json(DocumentListResponse {
-                documents: summaries,
-                page: paginated.page,
-                page_size: paginated.page_size,
-                total_count: paginated.total_count,
-                total_pages: paginated.total_pages,
-            })
-        }
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to list documents");
-            HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": "Failed to list documents",
-                "message": e.to_string()
-            }))
-        }
-    }
+    let summaries: Vec<DocumentSummary> = paginated
+        .documents
+        .into_iter()
+        .map(|doc| DocumentSummary {
+            id: doc.id,
+            url: doc.canonical_url.to_string(),
+            retriever_type: format!("{:?}", doc.retriever).to_lowercase(),
+            title: doc.metadata.and_then(|m| m.title),
+            retrieved_at: doc.retrieved_at.to_rfc3339(),
+        })
+        .collect();
+
+    Ok(HttpResponse::Ok().json(DocumentListResponse {
+        documents: summaries,
+        page: paginated.page,
+        page_size: paginated.page_size,
+        total_count: paginated.total_count,
+        total_pages: paginated.total_pages,
+    }))
 }
 
 /// Get a reference document by ID
@@ -113,25 +105,12 @@ pub async fn list_documents(
 pub async fn get_document(
     service: web::Data<DocumentService>,
     path: web::Path<String>,
-) -> impl Responder {
+) -> Result<impl Responder, ApiError> {
     let id = path.into_inner();
 
-    match service.get_by_id(&id).await {
-        Ok(doc) => HttpResponse::Ok().json(doc),
-        Err(crate::service::document::DocumentServiceError::DbError(
-            crate::db::DbError::NotFound(_),
-        )) => HttpResponse::NotFound().json(serde_json::json!({
-            "error": "Document not found",
-            "id": id
-        })),
-        Err(e) => {
-            tracing::error!(error = %e, id = %id, "Failed to get document");
-            HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": "Failed to get document",
-                "message": e.to_string()
-            }))
-        }
-    }
+    let doc = service.get_by_id(&id).await?;
+
+    Ok(HttpResponse::Ok().json(doc))
 }
 
 /// Delete a reference document by ID
@@ -152,25 +131,16 @@ pub async fn get_document(
 pub async fn delete_document(
     service: web::Data<DocumentService>,
     path: web::Path<String>,
-) -> impl Responder {
+) -> Result<impl Responder, ApiError> {
     let id = path.into_inner();
 
-    match service.delete(&id).await {
-        Ok(true) => {
-            tracing::info!(id = %id, "Document deleted");
-            HttpResponse::NoContent().finish()
-        }
-        Ok(false) => HttpResponse::NotFound().json(serde_json::json!({
-            "error": "Document not found",
-            "id": id
-        })),
-        Err(e) => {
-            tracing::error!(error = %e, id = %id, "Failed to delete document");
-            HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": "Failed to delete document",
-                "message": e.to_string()
-            }))
-        }
+    let deleted = service.delete(&id).await?;
+
+    if deleted {
+        tracing::info!(id = %id, "Document deleted");
+        Ok(HttpResponse::NoContent().finish())
+    } else {
+        Err(ApiError::DocumentNotFound(id))
     }
 }
 

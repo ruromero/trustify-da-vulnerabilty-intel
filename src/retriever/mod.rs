@@ -35,6 +35,7 @@ pub use redhat_csaf::RedHatCsafRetriever;
 const ENV_GITHUB_TOKEN: &str = "GITHUB_TOKEN";
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum RetrieverError {
     #[error("HTTP request failed: {0}")]
     HttpError(#[from] reqwest::Error),

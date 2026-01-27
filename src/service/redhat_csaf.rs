@@ -10,6 +10,7 @@ use crate::model::{RemediationCategory, VendorRemediation};
 const CSAF_BASE_URL: &str = "https://security.access.redhat.com/data/csaf/v2/vex";
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum CsafError {
     #[error("HTTP error: {0}")]
     HttpError(#[from] reqwest::Error),

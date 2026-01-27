@@ -5,21 +5,23 @@
 use std::sync::Arc;
 
 use crate::model::{
-    ApplicabilityResult, ApplicabilitySourceType, ApplicabilityStatus,
-    ClaimCertainty, PackageIdentity, RemediationCategory, RemediationConfidenceLevel,
+    ApplicabilityResult, ApplicabilityStatus,
+    ClaimCertainty, PackageIdentity, RemediationCategory,
     RemediationKind, RemediationOption, RemediationPlan, RemediationPlanRequest, RemediationStatus,
-    Scope, SourceClaimReason, VendorRemediation, VulnerabilityAssessment,
+    Scope, SourceClaimReason, VulnerabilityAssessment,
 };
 use crate::model::remediations::action_extraction::ExtractedRemediationAction;
 use crate::service::llm::LlmClient;
 
+mod applicability;
 mod converters;
 mod prompts;
 mod version;
 
+use applicability::determine_applicability;
 use converters::convert_to_remediation_action;
 use prompts::{build_action_prompt, ACTION_GENERATION_SYSTEM_PROMPT};
-use version::{select_optimal_fixed_version, version_in_fixed_range, version_in_range};
+use version::select_optimal_fixed_version;
 
 /// Environment variable for remediation model (defaults to GPT-4O if not set)
 const ENV_REMEDIATION_MODEL: &str = "REMEDIATION_MODEL";
@@ -69,7 +71,7 @@ impl RemediationService {
             .await
             .map_err(|e| RemediationError::AssessmentFailed(e.to_string()))?;
 
-        let applicability = self.determine_applicability(request, &assessment);
+        let applicability = determine_applicability(request, &assessment);
 
         let options = self.generate_remediation_options(request, &assessment);
 
@@ -122,248 +124,6 @@ impl RemediationService {
 
         Ok((plan, assessment))
     }
-
-    /// Determine applicability using priority-based checks
-    fn determine_applicability(
-        &self,
-        request: &RemediationPlanRequest,
-        assessment: &VulnerabilityAssessment,
-    ) -> ApplicabilityResult {
-        if let Some(ref trusted) = request.trusted_content
-            && matches!(
-                trusted.status,
-                RemediationStatus::NotAffected | RemediationStatus::Fixed
-            )
-        {
-            let customer_justification = trusted
-                .justification
-                .as_deref()
-                .unwrap_or("no justification provided");
-
-            // Make explicit distinction between "never vulnerable" and "already fixed"
-            let justification = match trusted.status {
-                RemediationStatus::NotAffected => {
-                    format!(
-                        "Not affected: vulnerable code not present. Customer indicates: {} (purl: {})",
-                        customer_justification, trusted.purl
-                    )
-                }
-                RemediationStatus::Fixed => {
-                    format!(
-                        "Already fixed: vulnerability was present but has been remediated. Customer indicates: {} (purl: {})",
-                        customer_justification, trusted.purl
-                    )
-                }
-                _ => unreachable!(), // Already filtered by matches! above
-            };
-
-            tracing::info!(
-                cve = %request.cve,
-                purl = %trusted.purl,
-                status = ?trusted.status,
-                "Applicability determined from trusted content"
-            );
-
-            // Both Fixed and NotAffected mean the vulnerability is not required to be remediated:
-            // - NotAffected: Package was never vulnerable (not required to be remediated)
-            // - Fixed: Package was vulnerable but is now fixed (no longer required to be remediated)
-            let requires_action = ApplicabilityStatus::NotApplicable;
-
-            return ApplicabilityResult {
-                requires_action,
-                justification,
-                confidence: RemediationConfidenceLevel::High,
-                sources: vec![ApplicabilitySourceType::Customer],
-            };
-        }
-
-        if let Some(result) = self.check_vendor_remediation_applicability(
-            &request.package,
-            &assessment.intel.vendor_remediations,
-        ) {
-            return result;
-        }
-
-        self.check_version_based_applicability(&request.package, &assessment.intel)
-    }
-
-    /// Check vendor remediation applicability (Priority 2)
-    fn check_vendor_remediation_applicability(
-        &self,
-        package: &PackageIdentity,
-        vendor_remediations: &[VendorRemediation],
-    ) -> Option<ApplicabilityResult> {
-        for remediation in vendor_remediations {
-            // Check if product matches (simplified - in production, match product_ids properly)
-            let product_matches = remediation
-                .product_ids
-                .iter()
-                .any(|pid| package.purl.as_str().contains(pid));
-
-            if !product_matches {
-                continue;
-            }
-
-            let requires_action = match remediation.category {
-                RemediationCategory::VendorFix => ApplicabilityStatus::Applicable,
-                RemediationCategory::NoneAvailable => ApplicabilityStatus::Applicable,
-                RemediationCategory::NoFixPlanned => ApplicabilityStatus::NotApplicable,
-                RemediationCategory::Workaround => ApplicabilityStatus::Applicable,
-                RemediationCategory::Other => ApplicabilityStatus::Uncertain,
-            };
-
-            // Make explicit distinction for NotApplicable cases
-            let justification = match requires_action {
-                ApplicabilityStatus::NotApplicable => {
-                    format!(
-                        "Not affected: vendor indicates no fix planned (vendor: {}). Product matching: {}",
-                        remediation.vendor,
-                        if product_matches { "high confidence" } else { "low confidence" }
-                    )
-                }
-                _ => {
-                    format!(
-                        "Vendor remediation ({:?}) indicates {} for product matching purl. Product matching uncertainty: {}",
-                        remediation.category,
-                        format!("{:?}", requires_action),
-                        if product_matches { "high confidence" } else { "low confidence" }
-                    )
-                }
-            };
-
-            let confidence = if product_matches {
-                RemediationConfidenceLevel::High
-            } else {
-                RemediationConfidenceLevel::Medium
-            };
-
-            return Some(ApplicabilityResult {
-                requires_action,
-                justification,
-                confidence,
-                sources: vec![ApplicabilitySourceType::Vendor],
-            });
-        }
-
-        None
-    }
-
-    /// Check version-based applicability (Priority 3)
-    fn check_version_based_applicability(
-        &self,
-        package: &PackageIdentity,
-        intel: &crate::model::VulnerabilityIntel,
-    ) -> ApplicabilityResult {
-        let package_version = self.extract_version_from_purl(&package.purl);
-
-        if package_version.is_none() {
-            return ApplicabilityResult {
-                requires_action: ApplicabilityStatus::Uncertain,
-                justification: "Cannot determine applicability: version not found in package URL"
-                    .to_string(),
-                confidence: RemediationConfidenceLevel::Low,
-                sources: vec![ApplicabilitySourceType::VersionCheck],
-            };
-        }
-
-        let version = package_version.unwrap();
-        let mut is_affected = false;
-        let mut is_fixed = false;
-
-        // Check if version is in affected ranges
-        for range in &intel.affected_versions {
-            if version_in_range(&version, range) {
-                is_affected = true;
-                break;
-            }
-        }
-
-        // Check if version is in fixed ranges
-        for range in &intel.fixed_versions {
-            if version_in_fixed_range(&version, range) {
-                is_fixed = true;
-                break;
-            }
-        }
-
-        let requires_action = if is_affected && !is_fixed {
-            ApplicabilityStatus::Applicable
-        } else if !is_affected {
-            ApplicabilityStatus::NotApplicable
-        } else {
-            ApplicabilityStatus::Uncertain
-        };
-
-        // Make explicit distinction between "never vulnerable" and "already fixed"
-        let justification = match (is_affected, is_fixed) {
-            (false, _) => {
-                format!(
-                    "Not affected: vulnerable code not present in version {} (version is outside affected range)",
-                    version
-                )
-            }
-            (true, true) => {
-                // Find the fixed version for clarity
-                let fixed_version_info = intel
-                    .fixed_versions
-                    .iter()
-                    .find_map(|r| r.fixed.as_ref())
-                    .map(|fv| format!("version {}", fv))
-                    .unwrap_or_else(|| "a fixed version".to_string());
-                
-                format!(
-                    "Already fixed: vulnerability was present but has been remediated in {} (current version: {})",
-                    fixed_version_info, version
-                )
-            }
-            (true, false) => {
-                format!(
-                    "Version {} is within affected range and not yet fixed",
-                    version
-                )
-            }
-        };
-
-        tracing::info!(
-            purl = %package.purl,
-            version = %version,
-            is_affected = is_affected,
-            is_fixed = is_fixed,
-            requires_action = ?requires_action,
-            "Applicability determined from version check"
-        );
-
-        ApplicabilityResult {
-            requires_action,
-            justification,
-            confidence: RemediationConfidenceLevel::Medium,
-            sources: vec![ApplicabilitySourceType::VersionCheck],
-        }
-    }
-
-    /// Extract version from purl string
-    /// PURL format: pkg:type/namespace/name@version?qualifiers#subpath
-    fn extract_version_from_purl(&self, purl: &url::Url) -> Option<String> {
-        let purl_str = purl.as_str();
-
-        // PURLs typically have @version in them
-        if let Some(at_pos) = purl_str.rfind('@') {
-            let after_at = &purl_str[at_pos + 1..];
-            // Version ends at ? (qualifiers) or # (subpath) or end of string
-            let version_end = after_at
-                .find('?')
-                .or_else(|| after_at.find('#'))
-                .unwrap_or(after_at.len());
-
-            let version = &after_at[..version_end];
-            if !version.is_empty() {
-                return Some(version.to_string());
-            }
-        }
-
-        None
-    }
-
 
     /// Generate remediation options (Phase 2)
     fn generate_remediation_options(
@@ -897,6 +657,7 @@ impl RemediationService {
 
 /// Error type for remediation plan generation
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum RemediationError {
     #[error("Failed to get vulnerability assessment: {0}")]
     AssessmentFailed(String),

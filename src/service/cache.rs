@@ -19,6 +19,7 @@ const DEFAULT_REDIS_DB: &str = "0";
 const DEFAULT_TTL_SECONDS: u64 = 3600; // 1 hour
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum CacheError {
     #[error("Redis connection error: {0}")]
     Connection(#[from] redis::RedisError),

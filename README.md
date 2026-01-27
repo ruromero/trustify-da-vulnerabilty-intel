@@ -1,70 +1,45 @@
 # Trustify DA Agents
 
-A Rust-based vulnerability intelligence service that aggregates, enriches, and analyzes security vulnerability data from multiple sources using LLM-powered reasoning.
+A Rust-based vulnerability intelligence service that helps AI-assisted IDEs provide actionable remediation guidance for security vulnerabilities in project dependencies.
 
-## Purpose
+## What is this?
 
-Trustify DA Agents provides a unified API for:
+Trustify DA Agents is a REST service designed as a backend for MCP (Model Context Protocol) servers integrated with AI-assisted IDEs. When developers discover vulnerabilities in their dependencies, this service provides:
 
-- **Vulnerability Assessment**: Comprehensive vulnerability intelligence with LLM-powered claim extraction and exploitability/impact assessment
-- **Remediation Planning**: Actionable remediation plans with applicability determination and step-by-step instructions
-- **Reference Document Retrieval**: Automatically fetch and parse security advisories, commit details, and related documentation from various sources
-- **Data Enrichment**: Extract structured metadata and security claims from vulnerability references
+- **Comprehensive Vulnerability Assessments**: LLM-powered analysis of exploitability, impact, and confidence
+- **Actionable Remediation Plans**: Step-by-step instructions for fixing vulnerabilities
+- **Trusted Intelligence**: Claims extracted from authoritative sources (NVD, GitHub, Red Hat, etc.)
+- **Complete Audit Trail**: Full traceability of all data sources and LLM reasoning
+
+## Documentation
+
+- **[Architecture Overview](docs/architecture.md)** - System design, data flow, and component details
+- **[Configuration Guide](docs/configuration.md)** - Environment variables and config file options
+- **[Vulnerability Assessment API](docs/vulnerability-assessment.md)** - Detailed API documentation
+- **[Remediation Plan API](docs/remediation-plan.md)** - Detailed API documentation
+- **[Code Review & Recommendations](docs/code-review-recommendations.md)** - Best practices and improvement suggestions
 
 ## Key Features
 
-### LLM-Powered Intelligence
+- **Multi-Source Data Aggregation**: OSV.dev, NVD, GitHub, Red Hat CSAF, Bugzilla, and more
+- **LLM-Powered Analysis**: Automatic claim extraction, exploitability assessment, and remediation generation
+- **PostgreSQL Storage**: Persistent storage with full audit trail and content deduplication
+- **Redis Caching**: High-performance caching to reduce costs and improve response times
+- **Kubernetes Ready**: Health checks, env-based configuration, production-ready deployment
 
-- **Claim Extraction**: Automatically extract structured security claims from reference documents using LLM reasoning
-- **Vulnerability Assessment**: Synthesize exploitability, impact, and limitations from extracted claims
-- **Remediation Action Generation**: Generate detailed, actionable remediation instructions with preconditions and risk assessments
-- **Confidence Scoring**: Rule-based confidence computation with LLM-assisted reasoning explanations
-
-### Multi-Source Data Aggregation
-
-- **OSV.dev Integration**: Fetches vulnerability data from OSV.dev API
-- **Deps.dev Integration**: Enriches with package metadata (licenses, source repos, issue trackers)
-- **Red Hat CSAF/VEX**: Retrieves vendor-specific remediation information
-- **GitHub Integration**: Fetches advisories, issues, commits, and releases (with authentication support)
-- **NVD & CVE.org**: Retrieves official CVE descriptions and metadata
-- **Bugzilla**: Fetches bug details and comments
-
-### Intelligent Document Retrieval
-
-Specialized retrievers for:
-- NVD (National Vulnerability Database)
-- CVE.org (MITRE CVE API)
-- GitHub CVE (CVEProject/cvelistV5)
-- GitHub Security Advisories
-- GitHub Issues and Pull Requests
-- GitHub Commits (with file change extraction)
-- GitHub Releases
-- Red Hat CSAF/VEX documents
-- Bugzilla bugs
-- Generic web pages (with meta tag and code snippet extraction)
-
-### Data Persistence & Caching
-
-- **PostgreSQL**: Persistent storage for all reference documents with full audit trail
-- **Redis**: High-performance caching for vulnerability data, package metadata, and LLM-extracted claims
-- **Content Deduplication**: Documents identified by content hash to avoid duplicate storage
-- **Full Traceability**: Every document includes retrieval timestamp, source URL, and metadata
-
-### Auditability & Traceability
-
-- **Complete Audit Trail**: All reference documents stored with timestamps, source URLs, and retrieval metadata
-- **Claim Provenance**: Every extracted claim includes source document ID and evidence excerpts
-- **Assessment Traceability**: Vulnerability assessments include reference IDs linking back to source documents
-- **LLM Call Logging**: All LLM interactions logged with timing, token usage, and model information
-- **Version Tracking**: Semantic version comparison for accurate applicability determination
+For detailed feature information, see the [Architecture Documentation](docs/architecture.md).
 
 ## Prerequisites
 
+**Required**:
 - Rust 2024 edition
 - PostgreSQL 18+
-- Redis 8+
+- OpenAI API key
+
+**Optional**:
+- Redis 8+ (recommended for production)
+- GitHub token (for higher API rate limits)
 - Docker & Docker Compose (for local development)
-- OpenAI API key (required for LLM features)
 
 ## Quick Start
 
@@ -365,19 +340,113 @@ retriever:
 ### Running Tests
 
 ```bash
+# Run all tests
 cargo test
+
+# Run specific test
+cargo test test_name
+
+# Run with output
+cargo test -- --nocapture
+
+# Run integration tests only
+cargo test --test '*'
+```
+
+**Note**: Some tests require network access and are marked with `#[ignore]`. Run with:
+```bash
+cargo test -- --ignored
 ```
 
 ### Building for Production
 
 ```bash
+# Build optimized release binary
 cargo build --release
+
+# Binary location
+./target/release/trustify-da-agents
 ```
 
-## Documentation
+### Code Quality
 
-- [Vulnerability Assessment](docs/vulnerability-assessment.md) - Detailed guide to vulnerability assessment generation
-- [Remediation Plan](docs/remediation-plan.md) - Detailed guide to remediation plan generation
+```bash
+# Format code
+cargo fmt
+
+# Lint with clippy
+cargo clippy -- -D warnings
+
+# Check for issues
+cargo check
+```
+
+## Troubleshooting
+
+### Database Connection Issues
+
+**Error**: `Failed to create database pool`
+
+**Solutions**:
+1. Check PostgreSQL is running: `pg_isready -h localhost`
+2. Verify credentials in `.env` file
+3. Test connection: `psql -h localhost -U da_agent -d da_agent`
+
+### Redis Connection Issues
+
+**Warning**: `Redis cache unavailable, running without cache`
+
+**Solution**: This is non-critical. The service will work without Redis but with reduced performance. To enable Redis:
+1. Check Redis is running: `redis-cli ping`
+2. Verify Redis configuration in `.env`
+
+### LLM API Issues
+
+**Error**: `Failed to create LLM client: invalid OPENAI_API_KEY`
+
+**Solutions**:
+1. Check `OPENAI_API_KEY` is set correctly
+2. Verify API key at https://platform.openai.com/api-keys
+3. Ensure API key has sufficient credits
+
+**Error**: `LLM assessment failed: rate limit exceeded`
+
+**Solutions**:
+1. Upgrade OpenAI plan for higher rate limits
+2. Increase cache TTL to reduce LLM calls: `DA_AGENT_CACHE_TTL=7200`
+
+### GitHub Rate Limiting
+
+**Warning**: `Rate limited while retrieving document`
+
+**Solution**: Add GitHub token for higher rate limits:
+- Without token: 60 requests/hour
+- With token: 5,000 requests/hour
+
+```bash
+export GITHUB_TOKEN="ghp_..."
+```
+
+For more detailed troubleshooting, see the [Configuration Guide](docs/configuration.md).
+
+## API Documentation
+
+API documentation is available at:
+- **Swagger UI**: http://localhost:8080/swagger-ui/
+- **OpenAPI JSON**: http://localhost:8080/openapi.json
+- **OpenAPI YAML**: http://localhost:8080/openapi.yaml
+
+## Contributing
+
+Contributions are welcome! Please see:
+- [Code Review Recommendations](docs/code-review-recommendations.md) for coding standards
+- [Architecture Documentation](docs/architecture.md) for system design
+
+**Before submitting a PR**:
+1. Run tests: `cargo test`
+2. Format code: `cargo fmt`
+3. Check lints: `cargo clippy`
+4. Update documentation if needed
 
 ## License
 

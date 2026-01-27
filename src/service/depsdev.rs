@@ -14,6 +14,7 @@ const DEPSDEV_API_BASE_URL: &str = "https://api.deps.dev/v3alpha";
 const ENV_DEPSDEV_BASE_URL: &str = "DEPSDEV_BASE_URL";
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum DepsDevError {
     #[error("Package not found: {0}")]
     NotFound(String),
