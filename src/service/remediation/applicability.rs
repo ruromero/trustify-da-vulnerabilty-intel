@@ -7,12 +7,11 @@
 //! 3. Version-based analysis (semantic version comparison)
 
 use crate::model::{
-    ApplicabilityResult, ApplicabilitySourceType, ApplicabilityStatus,
-    PackageIdentity, RemediationCategory, RemediationConfidenceLevel,
-    RemediationPlanRequest, RemediationStatus, VendorRemediation,
-    VulnerabilityAssessment, VulnerabilityIntel,
+    ApplicabilityResult, ApplicabilitySourceType, ApplicabilityStatus, PackageIdentity,
+    RemediationCategory, RemediationConfidenceLevel, RemediationPlanRequest, RemediationStatus,
+    VendorRemediation, VulnerabilityAssessment, VulnerabilityIntel,
 };
-use crate::service::remediation::version::{version_in_range, version_in_fixed_range};
+use crate::service::remediation::version::{version_in_fixed_range, version_in_range};
 
 /// Determine applicability using priority-based checks
 ///
@@ -124,15 +123,23 @@ fn check_vendor_remediation_applicability(
                 format!(
                     "Not affected: vendor indicates no fix planned (vendor: {}). Product matching: {}",
                     remediation.vendor,
-                    if product_matches { "high confidence" } else { "low confidence" }
+                    if product_matches {
+                        "high confidence"
+                    } else {
+                        "low confidence"
+                    }
                 )
             }
             _ => {
                 format!(
-                    "Vendor remediation ({:?}) indicates {} for product matching purl. Product matching uncertainty: {}",
+                    "Vendor remediation ({:?}) indicates {:?} for product matching purl. Product matching uncertainty: {}",
                     remediation.category,
-                    format!("{:?}", requires_action),
-                    if product_matches { "high confidence" } else { "low confidence" }
+                    requires_action,
+                    if product_matches {
+                        "high confidence"
+                    } else {
+                        "low confidence"
+                    }
                 )
             }
         };

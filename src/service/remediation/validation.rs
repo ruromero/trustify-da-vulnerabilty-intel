@@ -73,14 +73,12 @@ pub fn validate_extracted_remediation(
             let mut found_recommended_version = false;
 
             for instr in &dependency_instructions {
-                if let Some(version_value) = instr.parameters.get("version") {
-                    if let Some(version_str) = version_value.as_str() {
-                        if version_str == recommended_version {
+                if let Some(version_value) = instr.parameters.get("version")
+                    && let Some(version_str) = version_value.as_str()
+                        && version_str == recommended_version {
                             found_recommended_version = true;
                             break;
                         }
-                    }
-                }
             }
 
             if !found_recommended_version {
@@ -103,7 +101,14 @@ pub fn validate_extracted_remediation(
         }
 
         // Check that domain is valid
-        let valid_domains = ["dependency", "code", "configuration", "build", "test", "annotation"];
+        let valid_domains = [
+            "dependency",
+            "code",
+            "configuration",
+            "build",
+            "test",
+            "annotation",
+        ];
         if !valid_domains.contains(&instr.domain.as_str()) {
             result.add_warning(format!(
                 "Instruction {} has unusual domain '{}' (expected one of: {})",
@@ -114,8 +119,8 @@ pub fn validate_extracted_remediation(
         }
 
         // Check that dependency instructions have required parameters
-        if instr.domain == "dependency" {
-            if !instr.parameters.contains_key("package_name")
+        if instr.domain == "dependency"
+            && !instr.parameters.contains_key("package_name")
                 && !instr.parameters.contains_key("version")
             {
                 result.add_warning(format!(
@@ -123,7 +128,6 @@ pub fn validate_extracted_remediation(
                     i + 1
                 ));
             }
-        }
     }
 
     // Check 4: Confirmation risks are specific (not vague)
@@ -186,10 +190,7 @@ pub fn validate_extracted_remediation(
 
         // Check that reasoning mentions the version selection (if dependency action)
         if optimal_fixed_version.is_some()
-            && action
-                .instructions
-                .iter()
-                .any(|i| i.domain == "dependency")
+            && action.instructions.iter().any(|i| i.domain == "dependency")
         {
             let reasoning_lower = reasoning.to_lowercase();
             if !reasoning_lower.contains("version") {
@@ -202,7 +203,9 @@ pub fn validate_extracted_remediation(
 
     // Check 7: Expected outcomes are present and substantive
     if action.expected_outcomes.is_empty() {
-        result.add_warning("No expected outcomes provided - recommended for verification".to_string());
+        result.add_warning(
+            "No expected outcomes provided - recommended for verification".to_string(),
+        );
     } else {
         for (i, outcome) in action.expected_outcomes.iter().enumerate() {
             if outcome.trim().len() < 15 {
@@ -232,15 +235,23 @@ mod tests {
                 action: "Upgrade package to version 2.0.0".to_string(),
                 parameters: {
                     let mut map = HashMap::new();
-                    map.insert("package_name".to_string(), serde_json::json!("example-package"));
+                    map.insert(
+                        "package_name".to_string(),
+                        serde_json::json!("example-package"),
+                    );
                     map.insert("version".to_string(), serde_json::json!("2.0.0"));
                     map
                 },
             }],
             preconditions: vec!["Create backup of current deployment".to_string()],
             expected_outcomes: vec!["Vulnerability CVE-2024-1234 is patched".to_string()],
-            confirmation_risks: vec!["This upgrade changes the API from v1 to v2, requiring code changes".to_string()],
-            reasoning: Some("Selected version 2.0.0 as it's the lowest version that patches the vulnerability".to_string()),
+            confirmation_risks: vec![
+                "This upgrade changes the API from v1 to v2, requiring code changes".to_string(),
+            ],
+            reasoning: Some(
+                "Selected version 2.0.0 as it's the lowest version that patches the vulnerability"
+                    .to_string(),
+            ),
         };
 
         let result = validate_extracted_remediation(&action, Some("2.0.0"));
@@ -288,7 +299,12 @@ mod tests {
 
         assert!(result.is_valid); // Only a warning
         assert!(!result.warnings.is_empty());
-        assert!(result.warnings.iter().any(|w| w.contains("recommended version")));
+        assert!(
+            result
+                .warnings
+                .iter()
+                .any(|w| w.contains("recommended version"))
+        );
     }
 
     #[test]

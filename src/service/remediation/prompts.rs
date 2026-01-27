@@ -42,8 +42,8 @@ pub fn build_action_prompt(
             .take(10) // Limit to avoid prompt bloat
             .map(|c| {
                 format!(
-                    "- {}: {}",
-                    format!("{:?}", c.reason),
+                    "- {:?}: {}",
+                    c.reason,
                     c.evidence
                         .first()
                         .and_then(|e| e.excerpt.as_ref())

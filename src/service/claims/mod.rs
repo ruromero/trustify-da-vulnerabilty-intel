@@ -257,8 +257,12 @@ impl ClaimExtractionService {
 
         // Validate extracted claims for grounding and quality
         // Use the full normalized/raw content for validation (not truncated) to ensure excerpts are found
-        let content_to_validate = doc.normalized_content.as_deref().unwrap_or(&doc.raw_content);
-        let validation_result = validation::validate_extracted_claims(&extracted, content_to_validate);
+        let content_to_validate = doc
+            .normalized_content
+            .as_deref()
+            .unwrap_or(&doc.raw_content);
+        let validation_result =
+            validation::validate_extracted_claims(&extracted, content_to_validate);
 
         if !validation_result.is_valid {
             tracing::error!(

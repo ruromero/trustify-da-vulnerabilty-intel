@@ -4,13 +4,12 @@
 
 use std::sync::Arc;
 
+use crate::model::remediations::action_extraction::ExtractedRemediationAction;
 use crate::model::{
-    ApplicabilityResult, ApplicabilityStatus,
-    ClaimCertainty, PackageIdentity, RemediationCategory,
+    ApplicabilityResult, ApplicabilityStatus, ClaimCertainty, PackageIdentity, RemediationCategory,
     RemediationKind, RemediationOption, RemediationPlan, RemediationPlanRequest, RemediationStatus,
     Scope, SourceClaimReason, VulnerabilityAssessment,
 };
-use crate::model::remediations::action_extraction::ExtractedRemediationAction;
 use crate::service::llm::LlmClient;
 
 mod applicability;
@@ -21,7 +20,7 @@ mod version;
 
 use applicability::determine_applicability;
 use converters::convert_to_remediation_action;
-use prompts::{build_action_prompt, ACTION_GENERATION_SYSTEM_PROMPT};
+use prompts::{ACTION_GENERATION_SYSTEM_PROMPT, build_action_prompt};
 use version::select_optimal_fixed_version;
 
 /// Environment variable for remediation model (defaults to GPT-4O if not set)
@@ -96,10 +95,12 @@ impl RemediationService {
         let all_actions: Vec<_> = action_results
             .into_iter()
             .filter_map(|result| {
-                result.map_err(|e| {
-                    tracing::warn!(error = %e, "Failed to generate action after retries");
-                    e
-                }).ok()
+                result
+                    .map_err(|e| {
+                        tracing::warn!(error = %e, "Failed to generate action after retries");
+                        e
+                    })
+                    .ok()
             })
             .collect();
 
@@ -108,7 +109,10 @@ impl RemediationService {
 
         // Step 4: Plan Assembly
         let mut confirmation_risks = vec![applicability.justification];
-        if matches!(applicability.requires_action, ApplicabilityStatus::Uncertain) {
+        if matches!(
+            applicability.requires_action,
+            ApplicabilityStatus::Uncertain
+        ) {
             // Add confirmation risks from actions if uncertain
             for action in &actions {
                 confirmation_risks.extend(action.confirmation_risks.clone());
@@ -116,7 +120,10 @@ impl RemediationService {
         }
 
         let plan = RemediationPlan {
-            applicable: matches!(applicability.requires_action, ApplicabilityStatus::Applicable),
+            applicable: matches!(
+                applicability.requires_action,
+                ApplicabilityStatus::Applicable
+            ),
             actions,
             options,
             safe_defaults,
@@ -462,7 +469,10 @@ impl RemediationService {
         let mut last_error = None;
 
         for attempt in 0..=MAX_RETRIES {
-            match self.generate_action_from_option(intel, option, package).await {
+            match self
+                .generate_action_from_option(intel, option, package)
+                .await
+            {
                 Ok(action) => {
                     if attempt > 0 {
                         tracing::info!(
@@ -493,9 +503,7 @@ impl RemediationService {
         }
 
         Err(last_error.unwrap_or_else(|| {
-            RemediationError::ActionGenerationFailed(
-                "Failed after all retries".to_string(),
-            )
+            RemediationError::ActionGenerationFailed("Failed after all retries".to_string())
         }))
     }
 
@@ -578,8 +586,10 @@ impl RemediationService {
         };
 
         // Validate extracted remediation action
-        let validation_result =
-            validation::validate_extracted_remediation(&extracted, optimal_fixed_version.as_deref());
+        let validation_result = validation::validate_extracted_remediation(
+            &extracted,
+            optimal_fixed_version.as_deref(),
+        );
 
         if !validation_result.is_valid {
             tracing::error!(
@@ -618,11 +628,15 @@ impl RemediationService {
     /// Low risk actions go to safe_defaults:
     /// - Patch upgrade within same minor version
     /// - Suppress false positive with justification
+    ///
     /// Everything else goes to actions
     fn classify_actions(
         &self,
         actions: Vec<crate::model::RemediationAction>,
-    ) -> (Vec<crate::model::RemediationAction>, Vec<crate::model::RemediationAction>) {
+    ) -> (
+        Vec<crate::model::RemediationAction>,
+        Vec<crate::model::RemediationAction>,
+    ) {
         let mut safe_defaults = Vec::new();
         let mut regular_actions = Vec::new();
 
@@ -643,10 +657,8 @@ impl RemediationService {
             RemediationKind::PatchUpgrade => {
                 // Check if it's a patch upgrade within same minor version
                 // This is a simplified check - in production, you'd parse versions properly
-                action
-                    .description
-                    .to_lowercase()
-                    .contains("patch") || action.description.to_lowercase().contains("minor")
+                action.description.to_lowercase().contains("patch")
+                    || action.description.to_lowercase().contains("minor")
             }
             RemediationKind::IgnoreFalsePositive => {
                 // Suppress false positive with justification is safe
@@ -661,11 +673,10 @@ impl RemediationService {
     fn extract_ecosystem_from_purl(&self, purl: &url::Url) -> String {
         let purl_str = purl.as_str();
         // Extract type from pkg:type/...
-        if let Some(start) = purl_str.find(':') {
-            if let Some(end) = purl_str[start + 1..].find('/') {
+        if let Some(start) = purl_str.find(':')
+            && let Some(end) = purl_str[start + 1..].find('/') {
                 return purl_str[start + 1..start + 1 + end].to_string();
             }
-        }
         "unknown".to_string()
     }
 

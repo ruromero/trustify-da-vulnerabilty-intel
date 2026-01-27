@@ -1,11 +1,9 @@
 //! Converters from LLM-extracted models to domain models
 
-use crate::model::{
-    InstructionDomain, RemediationAction, RemediationInstruction, RemediationKind,
-};
 use crate::model::remediations::action_extraction::{
     ExtractedInstruction, ExtractedRemediationAction,
 };
+use crate::model::{InstructionDomain, RemediationAction, RemediationInstruction, RemediationKind};
 
 /// Convert extracted remediation action to domain model
 pub fn convert_to_remediation_action(

@@ -66,10 +66,7 @@ pub async fn readiness(
     cache: web::Data<Option<VulnerabilityCache>>,
 ) -> impl Responder {
     // Check database connection
-    let db_status = match sqlx::query("SELECT 1")
-        .fetch_one(db_pool.get_ref())
-        .await
-    {
+    let db_status = match sqlx::query("SELECT 1").fetch_one(db_pool.get_ref()).await {
         Ok(_) => {
             tracing::debug!("Database health check passed");
             "healthy"

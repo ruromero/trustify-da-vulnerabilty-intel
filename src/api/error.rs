@@ -37,6 +37,7 @@ pub enum ApiError {
 
     /// Bad request / validation error (400)
     #[error("Invalid request: {0}")]
+    #[allow(dead_code)] // Reserved for future request validation
     BadRequest(String),
 
     /// Internal server error (500)
@@ -101,7 +102,9 @@ impl From<crate::service::vulnerability::VulnerabilityServiceError> for ApiError
             crate::service::vulnerability::VulnerabilityServiceError::NotFound(id) => {
                 ApiError::VulnerabilityNotFound(id)
             }
-            crate::service::vulnerability::VulnerabilityServiceError::Internal(msg) => ApiError::Internal(msg),
+            crate::service::vulnerability::VulnerabilityServiceError::Internal(msg) => {
+                ApiError::Internal(msg)
+            }
         }
     }
 }

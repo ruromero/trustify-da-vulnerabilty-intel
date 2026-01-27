@@ -18,7 +18,9 @@ pub struct ExtractedAssessment {
     pub limitations: Vec<ExtractedLimitation>,
 
     /// Chain-of-thought reasoning for auditability
-    #[schemars(description = "Step-by-step explanation of how conclusions were reached (optional but recommended)")]
+    #[schemars(
+        description = "Step-by-step explanation of how conclusions were reached (optional but recommended)"
+    )]
     pub reasoning: Option<String>,
 }
 
@@ -27,7 +29,9 @@ pub struct ExtractedAssessment {
 #[schemars(description = "Assessment of exploitability based on provided claims")]
 pub struct ExtractedExploitability {
     /// Exploitability status
-    #[schemars(description = "exploitable, conditionally_exploitable, not_exploitable, or unknown")]
+    #[schemars(
+        description = "exploitable, conditionally_exploitable, not_exploitable, or unknown"
+    )]
     pub status: ExtractedExploitabilityStatus,
 
     /// Certainty of this assessment
@@ -35,7 +39,9 @@ pub struct ExtractedExploitability {
     pub certainty: ExtractedCertainty,
 
     /// Conditions required for exploitation (if conditionally_exploitable)
-    #[schemars(description = "Specific conditions required for exploitation (e.g., 'requires authentication', 'XML parser must be enabled')")]
+    #[schemars(
+        description = "Specific conditions required for exploitation (e.g., 'requires authentication', 'XML parser must be enabled')"
+    )]
     pub conditions: Vec<String>,
 
     /// Additional explanatory notes
@@ -43,7 +49,9 @@ pub struct ExtractedExploitability {
     pub notes: Option<String>,
 
     /// Verbatim claim excerpts that support this assessment
-    #[schemars(description = "List of exact claim excerpts that support this conclusion (required for auditability)")]
+    #[schemars(
+        description = "List of exact claim excerpts that support this conclusion (required for auditability)"
+    )]
     pub supported_by: Vec<String>,
 }
 
@@ -110,11 +118,15 @@ pub enum ExtractedImpactLevel {
 #[schemars(description = "A known limitation, conflict, or uncertainty in the assessment")]
 pub struct ExtractedLimitation {
     /// Category of limitation
-    #[schemars(description = "Type of limitation: insufficient_data, runtime_dependent, environment_specific, or conflicting_data")]
+    #[schemars(
+        description = "Type of limitation: insufficient_data, runtime_dependent, environment_specific, or conflicting_data"
+    )]
     pub reason: ExtractedLimitationReason,
 
     /// Detailed explanation of the limitation
-    #[schemars(description = "Clear explanation of what is uncertain or missing (at least 10 characters)")]
+    #[schemars(
+        description = "Clear explanation of what is uncertain or missing (at least 10 characters)"
+    )]
     pub description: String,
 
     /// Optional: claim excerpts that highlight the limitation

@@ -2,8 +2,8 @@
 //!
 //! Ensures that assessments are grounded in claims and include proper evidence
 
-use crate::model::assessments::ExtractedAssessment;
 use crate::model::VulnerabilityIntel;
+use crate::model::assessments::ExtractedAssessment;
 
 /// Result of assessment validation
 #[derive(Debug)]
@@ -55,9 +55,7 @@ pub fn validate_extracted_assessment(
     let claim_excerpts: Vec<String> = intel
         .claims
         .iter()
-        .flat_map(|c| {
-            c.evidence.iter().filter_map(|e| e.excerpt.clone())
-        })
+        .flat_map(|c| c.evidence.iter().filter_map(|e| e.excerpt.clone()))
         .collect();
 
     // Validate exploitability assessment
@@ -137,14 +135,13 @@ pub fn validate_extracted_assessment(
         result.add_warning(
             "Assessment lacks reasoning field - recommended for auditability".to_string(),
         );
-    } else if let Some(ref reasoning) = assessment.reasoning {
-        if reasoning.trim().len() < 50 {
+    } else if let Some(ref reasoning) = assessment.reasoning
+        && reasoning.trim().len() < 50 {
             result.add_warning(format!(
                 "Reasoning is very short ({} chars) - may lack detail",
                 reasoning.len()
             ));
         }
-    }
 
     result
 }
@@ -244,7 +241,9 @@ mod tests {
                 supported_by: vec!["The vulnerability can be exploited remotely".to_string()],
             },
             limitations: vec![],
-            reasoning: Some("Based on the claim that the vulnerability can be exploited remotely".to_string()),
+            reasoning: Some(
+                "Based on the claim that the vulnerability can be exploited remotely".to_string(),
+            ),
         };
 
         let intel = create_test_intel();

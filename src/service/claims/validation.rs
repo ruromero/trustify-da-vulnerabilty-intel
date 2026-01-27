@@ -124,9 +124,9 @@ pub fn validate_extracted_claims(
 
             // Check 2: Verify excerpt contains security keywords
             let excerpt_lower = excerpt.to_lowercase();
-            let has_security_keyword = SECURITY_KEYWORDS.iter().any(|kw| {
-                excerpt_lower.contains(kw)
-            });
+            let has_security_keyword = SECURITY_KEYWORDS
+                .iter()
+                .any(|kw| excerpt_lower.contains(kw));
 
             if !has_security_keyword {
                 result.add_warning(format!(
@@ -208,7 +208,7 @@ fn is_substantially_present(excerpt: &str, document: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::claims::{ExtractedClaim, ExtractedCertainty, ExtractedReason};
+    use crate::model::claims::{ExtractedCertainty, ExtractedClaim, ExtractedReason};
 
     #[test]
     fn test_valid_claims() {
@@ -255,8 +255,9 @@ mod tests {
                 reason: ExtractedReason::Impact,
                 certainty: ExtractedCertainty::Strong,
                 excerpt: Some("CVE-2024-1234 affects confidentiality".to_string()),
-                rationale: "This excerpt explains that the vulnerability impacts data confidentiality"
-                    .to_string(),
+                rationale:
+                    "This excerpt explains that the vulnerability impacts data confidentiality"
+                        .to_string(),
             }],
         };
 
