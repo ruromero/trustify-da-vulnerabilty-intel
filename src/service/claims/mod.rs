@@ -21,6 +21,7 @@ pub mod error;
 pub mod filters;
 pub mod prompts;
 pub mod synthesis;
+pub mod validation;
 
 pub use error::ClaimExtractionError;
 
@@ -213,11 +214,16 @@ impl ClaimExtractionService {
         let start_time = std::time::Instant::now();
 
         // Create extractor and extract claims using shared LLM client
+        // Use temperature=0.0 and seed for deterministic, reproducible outputs
         let extractor = self
             .llm_client
             .openai_client()
             .extractor::<ExtractedClaims>(&self.model)
             .preamble(EXTRACTION_SYSTEM_PROMPT)
+            .additional_params(serde_json::json!({
+                "temperature": 0.0,
+                "seed": 42
+            }))
             .build();
 
         let extracted = match extractor.extract(&prompt).await {
@@ -248,6 +254,33 @@ impl ClaimExtractionService {
                 return Err(ClaimExtractionError::ExtractionFailed(e.to_string()));
             }
         };
+
+        // Validate extracted claims for grounding and quality
+        // Use the full normalized/raw content for validation (not truncated) to ensure excerpts are found
+        let content_to_validate = doc.normalized_content.as_deref().unwrap_or(&doc.raw_content);
+        let validation_result = validation::validate_extracted_claims(&extracted, content_to_validate);
+
+        if !validation_result.is_valid {
+            tracing::error!(
+                doc_id = %doc.id,
+                cve = %cve_id,
+                errors = ?validation_result.errors,
+                "Claim extraction validation failed - claims not grounded in source"
+            );
+            return Err(ClaimExtractionError::ExtractionFailed(format!(
+                "Validation failed: {}",
+                validation_result.errors.join("; ")
+            )));
+        }
+
+        if !validation_result.warnings.is_empty() {
+            tracing::warn!(
+                doc_id = %doc.id,
+                cve = %cve_id,
+                warnings = ?validation_result.warnings,
+                "Claim extraction produced quality warnings"
+            );
+        }
 
         // Convert extracted claims to SourceClaims
         let raw_claims_count = extracted.claims.len();

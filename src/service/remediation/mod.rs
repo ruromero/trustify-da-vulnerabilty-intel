@@ -16,6 +16,7 @@ use crate::service::llm::LlmClient;
 mod applicability;
 mod converters;
 mod prompts;
+mod validation;
 mod version;
 
 use applicability::determine_applicability;
@@ -536,11 +537,16 @@ impl RemediationService {
         let prompt_length = prompt.len();
 
         // Create extractor and extract action using shared LLM client
+        // Use temperature=0.1 (slightly creative for phrasing) and seed for reproducibility
         let extractor = self
             .llm_client
             .openai_client()
             .extractor::<ExtractedRemediationAction>(&self.model)
             .preamble(ACTION_GENERATION_SYSTEM_PROMPT)
+            .additional_params(serde_json::json!({
+                "temperature": 0.1,
+                "seed": 42
+            }))
             .build();
 
         let extracted = match extractor.extract(&prompt).await {
@@ -570,6 +576,32 @@ impl RemediationService {
                 return Err(RemediationError::ActionGenerationFailed(e.to_string()));
             }
         };
+
+        // Validate extracted remediation action
+        let validation_result =
+            validation::validate_extracted_remediation(&extracted, optimal_fixed_version.as_deref());
+
+        if !validation_result.is_valid {
+            tracing::error!(
+                cve = %intel.cve_identity.cve,
+                option_kind = ?option.kind,
+                errors = ?validation_result.errors,
+                "Remediation action validation failed"
+            );
+            return Err(RemediationError::ActionGenerationFailed(format!(
+                "Validation failed: {}",
+                validation_result.errors.join("; ")
+            )));
+        }
+
+        if !validation_result.warnings.is_empty() {
+            tracing::warn!(
+                cve = %intel.cve_identity.cve,
+                option_kind = ?option.kind,
+                warnings = ?validation_result.warnings,
+                "Remediation action produced quality warnings"
+            );
+        }
 
         // Convert extracted action to domain model
         let action = convert_to_remediation_action(

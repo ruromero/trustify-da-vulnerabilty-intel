@@ -23,6 +23,7 @@ pub mod confidence;
 pub mod converters;
 pub mod error;
 pub mod prompts;
+pub mod validation;
 
 pub use error::AssessmentError;
 
@@ -71,11 +72,16 @@ impl VulnerabilityAssessmentService {
         let prompt_length = prompt.len();
 
         // Create extractor and extract assessment using shared LLM client
+        // Use temperature=0.0 and seed for deterministic, reproducible outputs
         let extractor = self
             .llm_client
             .openai_client()
             .extractor::<ExtractedAssessment>(&self.model)
             .preamble(ASSESSMENT_SYSTEM_PROMPT)
+            .additional_params(serde_json::json!({
+                "temperature": 0.0,
+                "seed": 42
+            }))
             .build();
 
         let extracted = match extractor.extract(&prompt).await {
@@ -103,6 +109,29 @@ impl VulnerabilityAssessmentService {
                 return Err(AssessmentError::AssessmentFailed(e.to_string()));
             }
         };
+
+        // Validate extracted assessment for grounding and completeness
+        let validation_result = validation::validate_extracted_assessment(&extracted, intel);
+
+        if !validation_result.is_valid {
+            tracing::error!(
+                cve = %cve_id,
+                errors = ?validation_result.errors,
+                "Assessment validation failed - not properly grounded"
+            );
+            return Err(AssessmentError::AssessmentFailed(format!(
+                "Validation failed: {}",
+                validation_result.errors.join("; ")
+            )));
+        }
+
+        if !validation_result.warnings.is_empty() {
+            tracing::warn!(
+                cve = %cve_id,
+                warnings = ?validation_result.warnings,
+                "Assessment produced quality warnings"
+            );
+        }
 
         // Convert extracted assessment to domain models
         let exploitability = convert_exploitability(extracted.exploitability);
