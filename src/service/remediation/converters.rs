@@ -48,6 +48,10 @@ fn convert_instruction(extracted: ExtractedInstruction) -> RemediationInstructio
     RemediationInstruction {
         domain,
         action: extracted.action,
-        parameters: extracted.parameters,
+        parameters: extracted
+            .parameters
+            .into_iter()
+            .map(|entry| (entry.key, entry.value))
+            .collect(),
     }
 }

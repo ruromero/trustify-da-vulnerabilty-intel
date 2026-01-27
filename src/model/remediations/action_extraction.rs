@@ -2,10 +2,10 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// LLM-extracted remediation action structure
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(description = "Detailed remediation instructions for addressing a vulnerability")]
 pub struct ExtractedRemediationAction {
     /// Instructions broken down by domain
     #[schemars(
@@ -38,9 +38,16 @@ pub struct ExtractedRemediationAction {
     pub reasoning: Option<String>,
 }
 
-/// LLM-extracted instruction structure
+/// Key-value pair for parameters (used to avoid additionalProperties requirement from OpenAI)
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(description = "A single actionable remediation step")]
+pub struct ParameterEntry {
+    pub key: String,
+    pub value: serde_json::Value,
+}
+
+/// LLM-extracted instruction structure
+/// Parameters are stored as Vec<ParameterEntry> to avoid OpenAI's additionalProperties requirement
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ExtractedInstruction {
     /// Domain of the instruction (dependency, code, configuration, build, annotation)
     #[schemars(
@@ -53,8 +60,9 @@ pub struct ExtractedInstruction {
     pub action: String,
 
     /// Parameters for the action (key-value pairs)
+    /// Serialized as Vec<ParameterEntry> to avoid additionalProperties requirement from OpenAI
     #[schemars(
-        description = "Specific parameters for automated execution (e.g., package_name, version, file_path, configuration_key)"
+        description = "Specific parameters for automated execution as key-value pairs (e.g., [{\"key\": \"package_name\", \"value\": \"example\"}, {\"key\": \"version\", \"value\": \"1.2.3\"}])"
     )]
-    pub parameters: std::collections::HashMap<String, serde_json::Value>,
+    pub parameters: Vec<ParameterEntry>,
 }

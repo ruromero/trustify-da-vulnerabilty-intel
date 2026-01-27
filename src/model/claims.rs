@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 /// Response from LLM claim extraction
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(description = "Security claims extracted from a vulnerability reference document")]
 pub struct ExtractedClaims {
     /// Array of security claims. Return empty array if no valid security claims exist.
     #[schemars(description = "List of security-relevant claims with evidence")]
@@ -12,13 +11,10 @@ pub struct ExtractedClaims {
 
 /// A single security claim extracted from a document
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(description = "A security-relevant assertion with evidence")]
 pub struct ExtractedClaim {
-    /// Category of the claim
     #[serde(rename = "reason")]
     pub reason: ExtractedReason,
 
-    /// Confidence level of the claim
     pub certainty: ExtractedCertainty,
 
     /// Verbatim excerpt from the document (1-3 sentences) that directly supports this claim
@@ -34,9 +30,7 @@ pub struct ExtractedClaim {
     pub rationale: String,
 }
 
-/// Type of security claim
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(description = "Type of security claim: identification, exploitability, impact, or mitigation")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedReason {
     Identification,
@@ -45,9 +39,7 @@ pub enum ExtractedReason {
     Mitigation,
 }
 
-/// Certainty level of a claim
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(description = "Certainty level: strong (explicitly stated), conditional (true under conditions), indicative (suggested), or identification_only (basic identification)")]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractedCertainty {
     Conditional,

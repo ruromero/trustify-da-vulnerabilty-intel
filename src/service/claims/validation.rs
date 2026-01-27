@@ -64,6 +64,15 @@ const SECURITY_KEYWORDS: &[&str] = &[
     "bypass",
     "disclosure",
     "exposure",
+    "leak",
+    "leaks",
+    "leaked",
+    "data leak",
+    "information disclosure",
+    "unauthorized access",
+    "denial of service",
+    "remote code execution",
+    "code execution",
 ];
 
 /// Meta-commentary phrases that should NOT appear in rationales

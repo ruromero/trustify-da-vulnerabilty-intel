@@ -73,8 +73,8 @@ pub fn validate_extracted_remediation(
             let mut found_recommended_version = false;
 
             for instr in &dependency_instructions {
-                if let Some(version_value) = instr.parameters.get("version")
-                    && let Some(version_str) = version_value.as_str()
+                if let Some(version_entry) = instr.parameters.iter().find(|e| e.key == "version")
+                    && let Some(version_str) = version_entry.value.as_str()
                         && version_str == recommended_version {
                             found_recommended_version = true;
                             break;
@@ -120,8 +120,8 @@ pub fn validate_extracted_remediation(
 
         // Check that dependency instructions have required parameters
         if instr.domain == "dependency"
-            && !instr.parameters.contains_key("package_name")
-                && !instr.parameters.contains_key("version")
+            && !instr.parameters.iter().any(|e| e.key == "package_name")
+                && !instr.parameters.iter().any(|e| e.key == "version")
             {
                 result.add_warning(format!(
                     "Instruction {} is a dependency action but lacks package_name or version parameters",
@@ -313,7 +313,7 @@ mod tests {
             instructions: vec![ExtractedInstruction {
                 domain: "configuration".to_string(),
                 action: "Update configuration file".to_string(),
-                parameters: HashMap::new(),
+                parameters: vec![],
             }],
             preconditions: vec![],
             expected_outcomes: vec!["Configuration updated".to_string()],
@@ -334,7 +334,7 @@ mod tests {
             instructions: vec![ExtractedInstruction {
                 domain: "code".to_string(),
                 action: "Apply security patch".to_string(),
-                parameters: HashMap::new(),
+                parameters: vec![],
             }],
             preconditions: vec![],
             expected_outcomes: vec!["Security vulnerability fixed".to_string()],
