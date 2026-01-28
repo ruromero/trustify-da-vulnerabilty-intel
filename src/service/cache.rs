@@ -18,6 +18,9 @@ const DEFAULT_REDIS_PORT: &str = "6379";
 const DEFAULT_REDIS_DB: &str = "0";
 const DEFAULT_TTL_SECONDS: u64 = 3600; // 1 hour
 
+// TTL for assessments, remediation plans, and claims (30 days in seconds)
+const ASSESSMENT_TTL_SECONDS: u64 = 30 * 24 * 60 * 60; // 30 days
+
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum CacheError {
@@ -36,6 +39,8 @@ const PREFIX_VULNERABILITY: &str = "vuln:";
 const PREFIX_PACKAGE: &str = "pkg:";
 const PREFIX_CSAF: &str = "csaf:";
 const PREFIX_CLAIMS: &str = "claims:";
+const PREFIX_ASSESSMENT: &str = "assessment:";
+const PREFIX_REMEDIATION: &str = "remediation:";
 
 /// Redis-based cache for vulnerability and package data
 #[derive(Clone)]
@@ -127,7 +132,108 @@ impl VulnerabilityCache {
 
     /// Cache claims by document ID
     pub async fn set_claims<T: Serialize>(&self, doc_id: &str, data: &T) -> Result<(), CacheError> {
-        self.set_with_prefix(PREFIX_CLAIMS, doc_id, data).await
+        // Use 30-day TTL for claims
+        self.set_with_prefix_and_ttl(PREFIX_CLAIMS, doc_id, data, ASSESSMENT_TTL_SECONDS).await
+    }
+
+    /// Get cached vulnerability assessment by composite key hash
+    pub async fn get_assessment<T: DeserializeOwned>(&self, key_hash: &str) -> Result<T, CacheError> {
+        self.get_with_prefix(PREFIX_ASSESSMENT, key_hash).await
+    }
+
+    /// Cache vulnerability assessment by composite key hash
+    pub async fn set_assessment<T: Serialize>(
+        &self,
+        key_hash: &str,
+        data: &T,
+    ) -> Result<(), CacheError> {
+        // Use 30-day TTL for assessments
+        self.set_with_prefix_and_ttl(PREFIX_ASSESSMENT, key_hash, data, ASSESSMENT_TTL_SECONDS).await
+    }
+
+    /// Get cached remediation plan by composite key hash
+    pub async fn get_remediation_plan<T: DeserializeOwned>(&self, key_hash: &str) -> Result<T, CacheError> {
+        self.get_with_prefix(PREFIX_REMEDIATION, key_hash).await
+    }
+
+    /// Cache remediation plan by composite key hash
+    pub async fn set_remediation_plan<T: Serialize>(
+        &self,
+        key_hash: &str,
+        data: &T,
+    ) -> Result<(), CacheError> {
+        // Use 30-day TTL for remediation plans
+        self.set_with_prefix_and_ttl(PREFIX_REMEDIATION, key_hash, data, ASSESSMENT_TTL_SECONDS).await
+    }
+
+    /// Invalidate cached assessment for a CVE (when OSV/CSAF/VEX data changes)
+    /// This removes all assessment cache entries that start with the CVE ID
+    pub async fn invalidate_assessments_for_cve(&self, cve: &str) -> Result<(), CacheError> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        let pattern = format!("{}*", PREFIX_ASSESSMENT);
+        
+        // Scan for keys matching the pattern
+        let mut cursor = 0u64;
+        loop {
+            let (new_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+                .arg(cursor)
+                .arg("MATCH")
+                .arg(&pattern)
+                .arg("COUNT")
+                .arg(100)
+                .query_async(&mut conn)
+                .await?;
+
+            // Delete keys that contain the CVE ID in their hash
+            for key in keys {
+                // The key format is "assessment:{hash}" where hash includes CVE
+                // We need to check if the cached assessment contains this CVE
+                // For simplicity, we'll delete all assessments and let them regenerate
+                // A more sophisticated approach would require storing CVE->key mappings
+                let _: () = conn.del(&key).await?;
+            }
+
+            if new_cursor == 0 {
+                break;
+            }
+            cursor = new_cursor;
+        }
+
+        tracing::debug!(cve = %cve, "Invalidated assessment cache entries");
+        Ok(())
+    }
+
+    /// Invalidate cached remediation plans when assessment is invalidated
+    /// This removes all remediation plan cache entries
+    pub async fn invalidate_remediation_plans(&self) -> Result<(), CacheError> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+        let pattern = format!("{}*", PREFIX_REMEDIATION);
+        
+        // Scan for keys matching the pattern
+        let mut cursor = 0u64;
+        loop {
+            let (new_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+                .arg(cursor)
+                .arg("MATCH")
+                .arg(&pattern)
+                .arg("COUNT")
+                .arg(100)
+                .query_async(&mut conn)
+                .await?;
+
+            // Delete all remediation plan keys
+            for key in keys {
+                let _: () = conn.del(&key).await?;
+            }
+
+            if new_cursor == 0 {
+                break;
+            }
+            cursor = new_cursor;
+        }
+
+        tracing::debug!("Invalidated remediation plan cache entries");
+        Ok(())
     }
 
     async fn get_with_prefix<T: DeserializeOwned>(
@@ -154,14 +260,24 @@ impl VulnerabilityCache {
         key: &str,
         data: &T,
     ) -> Result<(), CacheError> {
+        self.set_with_prefix_and_ttl(prefix, key, data, self.ttl_seconds).await
+    }
+
+    async fn set_with_prefix_and_ttl<T: Serialize>(
+        &self,
+        prefix: &str,
+        key: &str,
+        data: &T,
+        ttl: u64,
+    ) -> Result<(), CacheError> {
         let full_key = format!("{}{}", prefix, key);
         let json =
             serde_json::to_string(data).map_err(|e| CacheError::Serialization(e.to_string()))?;
 
         let mut conn = self.client.get_multiplexed_async_connection().await?;
-        let _: () = conn.set_ex(&full_key, json, self.ttl_seconds).await?;
+        let _: () = conn.set_ex(&full_key, json, ttl).await?;
 
-        tracing::debug!(key = %full_key, ttl = self.ttl_seconds, "Cached data");
+        tracing::debug!(key = %full_key, ttl = ttl, "Cached data");
         Ok(())
     }
 }

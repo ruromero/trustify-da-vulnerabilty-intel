@@ -2,7 +2,7 @@
 
 ## Overview
 
-Trustify Vulnerability Intelligence is a vulnerability intelligence REST service designed to help AI-assisted IDEs provide actionable remediation guidance for security vulnerabilities in project dependencies. Built with Rust and Actix-web, it aggregates vulnerability data from multiple authoritative sources and uses LLM-powered analysis to generate comprehensive assessments and remediation plans.
+Trustify Vulnerability Intelligence is a vulnerability intelligence REST service designed to help AI-assisted IDEs provide actionable remediation guidance for security vulnerabilities in project dependencies. It aggregates vulnerability data from multiple authoritative sources and uses LLM-powered analysis to generate comprehensive assessments and remediation plans.
 
 ## Use Case
 

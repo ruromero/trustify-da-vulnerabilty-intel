@@ -167,4 +167,9 @@ impl VulnerabilityAssessmentService {
         )
         .await
     }
+
+    /// Get the model ID used for assessments
+    pub fn model_id(&self) -> &str {
+        &self.model
+    }
 }

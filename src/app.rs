@@ -83,7 +83,7 @@ impl AppState {
         ));
 
         let remediation_service =
-            RemediationService::new(Arc::clone(&vulnerability_service), llm_client);
+            RemediationService::new(Arc::clone(&vulnerability_service), llm_client, cache.clone());
 
         Ok(Self {
             db_pool: Arc::new(db_pool),

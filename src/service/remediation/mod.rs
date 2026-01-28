@@ -10,11 +10,14 @@ use crate::model::{
     RemediationKind, RemediationOption, RemediationPlan, RemediationPlanRequest, RemediationStatus,
     Scope, SourceClaimReason, VulnerabilityAssessment,
 };
+use crate::service::cache::VulnerabilityCache;
+use crate::service::cache_keys::generate_assessment_cache_key;
+use crate::service::cache_keys::generate_remediation_cache_key;
 use crate::service::llm::LlmClient;
 
 mod applicability;
 mod converters;
-mod prompts;
+pub mod prompts;
 mod validation;
 mod version;
 
@@ -34,6 +37,7 @@ pub struct RemediationService {
     vulnerability_service: Arc<crate::service::VulnerabilityService>,
     llm_client: LlmClient,
     model: String,
+    cache: Option<VulnerabilityCache>,
 }
 
 impl RemediationService {
@@ -41,6 +45,7 @@ impl RemediationService {
     pub fn new(
         vulnerability_service: Arc<crate::service::VulnerabilityService>,
         llm_client: LlmClient,
+        cache: Option<VulnerabilityCache>,
     ) -> Self {
         let model = std::env::var(ENV_REMEDIATION_MODEL)
             .unwrap_or_else(|_| DEFAULT_REMEDIATION_MODEL.to_string());
@@ -54,6 +59,7 @@ impl RemediationService {
             vulnerability_service,
             llm_client,
             model,
+            cache,
         }
     }
 
@@ -70,6 +76,49 @@ impl RemediationService {
             .get_vulnerability_intel(&request.cve, &request.package)
             .await
             .map_err(|e| RemediationError::AssessmentFailed(e.to_string()))?;
+
+        // Generate cache key for remediation plan
+        // First, we need the assessment cache key to include in the remediation key
+        let assessment_model_id = self.vulnerability_service.assessment_model_id();
+        let assessment_cache_key = generate_assessment_cache_key(
+            &request.cve,
+            &assessment.intel,
+            assessment_model_id,
+        );
+        let remediation_cache_key = generate_remediation_cache_key(
+            request.trusted_content.as_ref(),
+            &request.package,
+            &self.model,
+            &assessment_cache_key,
+        );
+
+        // Try to get from cache first
+        if let Some(ref cache) = self.cache {
+            match cache.get_remediation_plan::<(RemediationPlan, VulnerabilityAssessment)>(&remediation_cache_key).await {
+                Ok((cached_plan, cached_assessment)) => {
+                    tracing::debug!(
+                        cve = %request.cve,
+                        cache_key = %remediation_cache_key,
+                        "Cache hit for remediation plan"
+                    );
+                    return Ok((cached_plan, cached_assessment));
+                }
+                Err(crate::service::cache::CacheError::Miss(_)) => {
+                    tracing::debug!(
+                        cve = %request.cve,
+                        cache_key = %remediation_cache_key,
+                        "Cache miss for remediation plan"
+                    );
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        cve = %request.cve,
+                        error = %e,
+                        "Cache error for remediation plan, continuing with generation"
+                    );
+                }
+            }
+        }
 
         let applicability = determine_applicability(request, &assessment);
 
@@ -129,6 +178,23 @@ impl RemediationService {
             safe_defaults,
             confirmation_risks,
         };
+
+        // Cache the remediation plan
+        if let Some(ref cache) = self.cache {
+            if let Err(e) = cache.set_remediation_plan(&remediation_cache_key, &(plan.clone(), assessment.clone())).await {
+                tracing::warn!(
+                    cve = %request.cve,
+                    error = %e,
+                    "Failed to cache remediation plan"
+                );
+            } else {
+                tracing::debug!(
+                    cve = %request.cve,
+                    cache_key = %remediation_cache_key,
+                    "Cached remediation plan"
+                );
+            }
+        }
 
         Ok((plan, assessment))
     }

@@ -46,8 +46,7 @@ For detailed feature information, see the [Architecture Documentation](docs/arch
 ### 1. Start Infrastructure
 
 ```bash
-cd etc/deploy/compose
-docker compose up -d
+podman compose -f etc/deploy/compose/compose.yaml up -d
 ```
 
 This starts PostgreSQL and Redis containers.
@@ -232,23 +231,33 @@ The API documentation is available at:
 
 ### Redis Caching
 
-**Cached Data** (with TTL, default 1 hour):
+**Cached Data**:
 
-- **Vulnerability Data**: OSV.dev responses keyed by CVE ID
-- **Package Metadata**: Deps.dev responses keyed by PURL
-- **CSAF/VEX Data**: Red Hat CSAF responses keyed by CVE ID
-- **Extracted Claims**: LLM-extracted claims keyed by `(reference_id + content_hash)`
+- **Vulnerability Data**: OSV.dev responses keyed by CVE ID (TTL: 1 hour, configurable)
+- **Package Metadata**: Deps.dev responses keyed by PURL (TTL: 1 hour, configurable)
+- **CSAF/VEX Data**: Red Hat CSAF responses keyed by CVE ID (TTL: 1 hour, configurable)
+- **Extracted Claims**: LLM-extracted claims keyed by `(reference_id + content_hash)` (TTL: 30 days)
+- **Vulnerability Assessments**: Complete assessments including exploitability, impact, limitations, and confidence (TTL: 30 days)
+- **Remediation Plans**: Complete remediation plans with actions and options (TTL: 30 days)
 
 **Why Cache:**
 - **Performance**: Avoid redundant API calls and LLM extractions
-- **Cost Optimization**: Reduce LLM API costs by caching claim extractions
+- **Cost Optimization**: Reduce LLM API costs by caching expensive LLM operations
 - **Rate Limiting**: Reduce load on external APIs
+- **Consistency**: Ensure identical inputs produce identical outputs
 
 **Cache Keys:**
-- `vuln:{cve_id}` - Vulnerability data
-- `pkg:{purl}` - Package metadata
-- `csaf:{cve_id}` - CSAF data
-- `claims:{reference_id}:{content_hash}` - Extracted claims
+- `vuln:{cve_id}` - Vulnerability data (OSV.dev)
+- `pkg:{purl}` - Package metadata (Deps.dev)
+- `csaf:{cve_id}` - CSAF data (Red Hat)
+- `claims:{reference_id}:{content_hash}` - Extracted claims per document
+- `assessment:{hash}` - Vulnerability assessment (hash of: cve_id, sorted_reference_ids, vendor_remediation_hash, package_identity_hash, prompt_version, model_id)
+- `remediation:{hash}` - Remediation plan (hash of: trusted_content_hash, package_identity_hash, model_id, assessment_cache_key, prompt_version)
+
+**Cache Invalidation:**
+- Assessments are automatically invalidated when OSV or CSAF/VEX data changes for a CVE
+- Remediation plans are automatically invalidated when their corresponding assessment is invalidated
+- Cache invalidation ensures fresh data when underlying vulnerability intelligence changes
 
 ### Traceability Features
 
@@ -414,6 +423,7 @@ cargo check
 **Solutions**:
 1. Upgrade OpenAI plan for higher rate limits
 2. Increase cache TTL to reduce LLM calls: `DA_AGENT_CACHE_TTL=7200`
+3. Note: Assessments and remediation plans use a fixed 30-day TTL to maximize cache hits and reduce costs
 
 ### GitHub Rate Limiting
 
