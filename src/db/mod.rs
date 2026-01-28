@@ -8,18 +8,18 @@ use sqlx::postgres::PgPoolOptions;
 use std::env;
 
 // Environment variable names
-const ENV_POSTGRES_HOST: &str = "DA_AGENT_POSTGRES_HOST";
-const ENV_POSTGRES_PORT: &str = "DA_AGENT_POSTGRES_PORT";
-const ENV_POSTGRES_USER: &str = "DA_AGENT_POSTGRES_USER";
-const ENV_POSTGRES_PASSWORD: &str = "DA_AGENT_POSTGRES_PASSWORD";
-const ENV_POSTGRES_DB: &str = "DA_AGENT_POSTGRES_DB";
+const ENV_POSTGRES_HOST: &str = "DA_INTEL_POSTGRES_HOST";
+const ENV_POSTGRES_PORT: &str = "DA_INTEL_POSTGRES_PORT";
+const ENV_POSTGRES_USER: &str = "DA_INTEL_POSTGRES_USER";
+const ENV_POSTGRES_PASSWORD: &str = "DA_INTEL_POSTGRES_PASSWORD";
+const ENV_POSTGRES_DB: &str = "DA_INTEL_POSTGRES_DB";
 
 // Default values
 const DEFAULT_POSTGRES_HOST: &str = "127.0.0.1";
 const DEFAULT_POSTGRES_PORT: &str = "5432";
-const DEFAULT_POSTGRES_USER: &str = "da_agent";
-const DEFAULT_POSTGRES_PASSWORD: &str = "da_agent";
-const DEFAULT_POSTGRES_DB: &str = "da_agent";
+const DEFAULT_POSTGRES_USER: &str = "da_intel";
+const DEFAULT_POSTGRES_PASSWORD: &str = "da_intel";
+const DEFAULT_POSTGRES_DB: &str = "da_intel";
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]

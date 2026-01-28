@@ -76,7 +76,7 @@ impl DocumentRetriever for NvdRetriever {
         let response = self
             .client
             .get(url.as_str())
-            .header("User-Agent", "trustify-da-agent/1.0")
+            .header("User-Agent", "trustify-da-intel/1.0")
             .send()
             .await?;
 

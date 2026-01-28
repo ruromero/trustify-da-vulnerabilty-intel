@@ -117,7 +117,7 @@ impl GitHubIssueRetriever {
             .client
             .get(&api_url)
             .header("Authorization", format!("Bearer {}", token))
-            .header("User-Agent", "trustify-da-agent/1.0")
+            .header("User-Agent", "trustify-da-intel/1.0")
             .header("Accept", "application/vnd.github+json")
             .send()
             .await?;
@@ -205,7 +205,7 @@ impl GitHubIssueRetriever {
         let mut request = self
             .client
             .get(url.as_str())
-            .header("User-Agent", "trustify-da-agent/1.0");
+            .header("User-Agent", "trustify-da-intel/1.0");
 
         if let Some(ref token) = self.token {
             request = request.header("Authorization", format!("Bearer {}", token));

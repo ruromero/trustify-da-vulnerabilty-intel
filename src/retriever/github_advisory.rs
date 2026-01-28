@@ -107,7 +107,7 @@ impl GitHubAdvisoryRetriever {
             .client
             .get(&api_url)
             .header("Authorization", format!("Bearer {}", token))
-            .header("User-Agent", "trustify-da-agent/1.0")
+            .header("User-Agent", "trustify-da-intel/1.0")
             .header("Accept", "application/vnd.github+json")
             .header("X-GitHub-Api-Version", "2022-11-28")
             .send()
@@ -188,7 +188,7 @@ impl GitHubAdvisoryRetriever {
         let mut request = self
             .client
             .get(url.as_str())
-            .header("User-Agent", "trustify-da-agent/1.0");
+            .header("User-Agent", "trustify-da-intel/1.0");
 
         if let Some(ref token) = self.token {
             request = request.header("Authorization", format!("Bearer {}", token));

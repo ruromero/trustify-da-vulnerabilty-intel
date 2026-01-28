@@ -22,7 +22,7 @@ impl BugzillaRetriever {
     pub fn new() -> Self {
         Self {
             client: Client::builder()
-                .user_agent("trustify-da-agent/1.0")
+                .user_agent("trustify-da-intel/1.0")
                 .build()
                 .unwrap_or_else(|_| Client::new()),
             // Matches: bugzilla.redhat.com/show_bug.cgi?id=123456 or bugzilla.redhat.com/123456

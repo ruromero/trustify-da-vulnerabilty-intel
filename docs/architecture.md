@@ -455,7 +455,7 @@ pub trait DocumentRetriever: Send + Sync {
 - `csaf:{cve}` - Red Hat CSAF data
 - `claims:{doc_id}` - Extracted claims per document
 
-**TTL**: 1 hour (configurable via `DA_AGENT_CACHE_TTL`)
+**TTL**: 1 hour (configurable via `DA_INTEL_CACHE_TTL`)
 
 **Pattern**:
 ```rust
@@ -543,7 +543,7 @@ Service Error → API Error → HTTP Response
 See [Configuration Guide](configuration.md) for detailed configuration options.
 
 **Configuration Sources** (priority order):
-1. Environment variables: `DA_AGENT_*`
+1. Environment variables: `DA_INTEL_*`
 2. Config file: `config.yaml`
 3. Hardcoded defaults
 
@@ -588,8 +588,8 @@ resources:
 ```
 
 **Environment Variables**:
-- `DA_AGENT_POSTGRES_*`: Database configuration
-- `DA_AGENT_REDIS_*`: Redis configuration
+- `DA_INTEL_POSTGRES_*`: Database configuration
+- `DA_INTEL_REDIS_*`: Redis configuration
 - `OPENAI_API_KEY`: Required for LLM features
 - `GITHUB_TOKEN`: Optional, for higher rate limits
 

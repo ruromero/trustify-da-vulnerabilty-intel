@@ -118,7 +118,7 @@ impl GitHubCommitRetriever {
             .client
             .get(&api_url)
             .header("Authorization", format!("Bearer {}", token))
-            .header("User-Agent", "trustify-da-agent/1.0")
+            .header("User-Agent", "trustify-da-intel/1.0")
             .header("Accept", "application/vnd.github+json")
             .send()
             .await?;

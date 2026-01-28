@@ -25,7 +25,7 @@ impl CveOrgRetriever {
     pub fn new() -> Self {
         Self {
             client: Client::builder()
-                .user_agent("trustify-da-agent/1.0")
+                .user_agent("trustify-da-intel/1.0")
                 .build()
                 .unwrap_or_else(|_| Client::new()),
             cve_pattern: Regex::new(r"(?i)(CVE-\d{4}-\d+)").unwrap(),

@@ -1,6 +1,6 @@
 # Example configuration file for Trustify Vulnerability Intelligence
 # Copy to config.yaml and modify as needed
-# Set DA_AGENT_CONFIG_PATH environment variable to use a different path
+# Set DA_INTEL_CONFIG_PATH environment variable to use a different path
 
 retrievers:
   # Whitelist: only retrieve from these domains (empty = allow all)

@@ -6,11 +6,11 @@ use redis::{AsyncCommands, Client};
 use serde::{Serialize, de::DeserializeOwned};
 
 // Environment variable names
-const ENV_REDIS_HOST: &str = "DA_AGENT_REDIS_HOST";
-const ENV_REDIS_PORT: &str = "DA_AGENT_REDIS_PORT";
-const ENV_REDIS_PASSWORD: &str = "DA_AGENT_REDIS_PASSWORD";
-const ENV_REDIS_DB: &str = "DA_AGENT_REDIS_DB";
-const ENV_CACHE_TTL: &str = "DA_AGENT_CACHE_TTL";
+const ENV_REDIS_HOST: &str = "DA_INTEL_REDIS_HOST";
+const ENV_REDIS_PORT: &str = "DA_INTEL_REDIS_PORT";
+const ENV_REDIS_PASSWORD: &str = "DA_INTEL_REDIS_PASSWORD";
+const ENV_REDIS_DB: &str = "DA_INTEL_REDIS_DB";
+const ENV_CACHE_TTL: &str = "DA_INTEL_CACHE_TTL";
 
 // Default values
 const DEFAULT_REDIS_HOST: &str = "127.0.0.1";
@@ -53,11 +53,11 @@ impl VulnerabilityCache {
     /// Create a new cache instance and verify connection
     ///
     /// Configuration via environment variables:
-    /// - `DA_AGENT_REDIS_HOST` - Redis host (default: 127.0.0.1)
-    /// - `DA_AGENT_REDIS_PORT` - Redis port (default: 6379)
-    /// - `DA_AGENT_REDIS_PASSWORD` - Redis password (default: none)
-    /// - `DA_AGENT_REDIS_DB` - Redis database number (default: 0)
-    /// - `DA_AGENT_CACHE_TTL` - Cache TTL in seconds (default: 3600)
+    /// - `DA_INTEL_REDIS_HOST` - Redis host (default: 127.0.0.1)
+    /// - `DA_INTEL_REDIS_PORT` - Redis port (default: 6379)
+    /// - `DA_INTEL_REDIS_PASSWORD` - Redis password (default: none)
+    /// - `DA_INTEL_REDIS_DB` - Redis database number (default: 0)
+    /// - `DA_INTEL_CACHE_TTL` - Cache TTL in seconds (default: 3600)
     pub async fn new() -> Result<Self, CacheError> {
         let host = env::var(ENV_REDIS_HOST).unwrap_or_else(|_| DEFAULT_REDIS_HOST.to_string());
         let port = env::var(ENV_REDIS_PORT).unwrap_or_else(|_| DEFAULT_REDIS_PORT.to_string());

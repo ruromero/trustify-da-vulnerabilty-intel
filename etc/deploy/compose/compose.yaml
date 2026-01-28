@@ -1,9 +1,9 @@
 services:
   redis:
     image: redis:8.4.0-alpine
-    container_name: da-agent-redis
+    container_name: da-intel-redis
     ports:
-      - "${DA_AGENT_REDIS_PORT:-6379}:6379"
+      - "${DA_INTEL_REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -15,17 +15,17 @@ services:
 
   postgres:
     image: postgres:18-alpine
-    container_name: da-agent-postgres
+    container_name: da-intel-postgres
     ports:
-      - "${DA_AGENT_POSTGRES_PORT:-5432}:5432"
+      - "${DA_INTEL_POSTGRES_PORT:-5432}:5432"
     environment:
-      POSTGRES_USER: ${DA_AGENT_POSTGRES_USER:-da_agent}
-      POSTGRES_PASSWORD: ${DA_AGENT_POSTGRES_PASSWORD:-da_agent}
-      POSTGRES_DB: ${DA_AGENT_POSTGRES_DB:-da_agent}
+      POSTGRES_USER: ${DA_INTEL_POSTGRES_USER:-da_intel}
+      POSTGRES_PASSWORD: ${DA_INTEL_POSTGRES_PASSWORD:-da_intel}
+      POSTGRES_DB: ${DA_INTEL_POSTGRES_DB:-da_intel}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DA_AGENT_POSTGRES_USER:-da_agent}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DA_INTEL_POSTGRES_USER:-da_intel}"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -57,15 +57,15 @@ Create a `.env` file in the project root:
 
 ```env
 # Database
-DA_AGENT_DB_HOST=localhost
-DA_AGENT_DB_PORT=5432
-DA_AGENT_DB_USER=da_agent
-DA_AGENT_DB_PASSWORD=da_agent
-DA_AGENT_DB_NAME=da_agent
+DA_INTEL_DB_HOST=localhost
+DA_INTEL_DB_PORT=5432
+DA_INTEL_DB_USER=da_intel
+DA_INTEL_DB_PASSWORD=da_intel
+DA_INTEL_DB_NAME=da_intel
 
 # Redis
-DA_AGENT_REDIS_HOST=localhost
-DA_AGENT_REDIS_PORT=6379
+DA_INTEL_REDIS_HOST=localhost
+DA_INTEL_REDIS_PORT=6379
 
 # LLM (Required)
 OPENAI_API_KEY=your_openai_api_key
@@ -274,7 +274,7 @@ The API documentation is available at:
 
 ### URL Filtering
 
-Create a `config.yaml` file (or set `DA_AGENT_CONFIG_PATH` to a custom path):
+Create a `config.yaml` file (or set `DA_INTEL_CONFIG_PATH` to a custom path):
 
 ```yaml
 retriever:
@@ -399,7 +399,7 @@ cargo check
 **Solutions**:
 1. Check PostgreSQL is running: `pg_isready -h localhost`
 2. Verify credentials in `.env` file
-3. Test connection: `psql -h localhost -U da_agent -d da_agent`
+3. Test connection: `psql -h localhost -U da_intel -d da_intel`
 
 ### Redis Connection Issues
 
@@ -422,7 +422,7 @@ cargo check
 
 **Solutions**:
 1. Upgrade OpenAI plan for higher rate limits
-2. Increase cache TTL to reduce LLM calls: `DA_AGENT_CACHE_TTL=7200`
+2. Increase cache TTL to reduce LLM calls: `DA_INTEL_CACHE_TTL=7200`
 3. Note: Assessments and remediation plans use a fixed 30-day TTL to maximize cache hits and reduce costs
 
 ### GitHub Rate Limiting

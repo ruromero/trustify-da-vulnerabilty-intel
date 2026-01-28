@@ -294,7 +294,7 @@ impl AppConfig {
     pub fn load() -> Result<Self, ConfigError> {
         ConfigBuilder::builder()
             .add_source(File::with_name("config").required(false))
-            .add_source(Environment::with_prefix("DA_AGENT").separator("__"))
+            .add_source(Environment::with_prefix("DA_INTEL").separator("__"))
             .build()?
             .try_deserialize()
     }

@@ -86,7 +86,7 @@ impl DocumentRetriever for GitHubReleaseRetriever {
         let mut request = self
             .client
             .get(&api_url)
-            .header("User-Agent", "trustify-da-agent/1.0")
+            .header("User-Agent", "trustify-da-intel/1.0")
             .header("Accept", "application/vnd.github+json")
             .header("X-GitHub-Api-Version", "2022-11-28");
 

@@ -6,8 +6,8 @@ This guide covers all configuration options for Trustify Vulnerability Intellige
 
 Configuration is loaded from multiple sources in the following priority order (highest to lowest):
 
-1. **Environment Variables**: `DA_AGENT_*` prefix
-2. **Config File**: `config.yaml` (default) or path in `DA_AGENT_CONFIG_PATH`
+1. **Environment Variables**: `DA_INTEL_*` prefix
+2. **Config File**: `config.yaml` (default) or path in `DA_INTEL_CONFIG_PATH`
 3. **Hardcoded Defaults**: Built-in fallback values
 
 ## Environment Variables
@@ -29,19 +29,19 @@ export PORT="8080"
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DA_AGENT_POSTGRES_HOST` | `127.0.0.1` | PostgreSQL hostname |
-| `DA_AGENT_POSTGRES_PORT` | `5432` | PostgreSQL port |
-| `DA_AGENT_POSTGRES_USER` | `da_agent` | Database user |
-| `DA_AGENT_POSTGRES_PASSWORD` | `da_agent` | Database password |
-| `DA_AGENT_POSTGRES_DB` | `da_agent` | Database name |
+| `DA_INTEL_POSTGRES_HOST` | `127.0.0.1` | PostgreSQL hostname |
+| `DA_INTEL_POSTGRES_PORT` | `5432` | PostgreSQL port |
+| `DA_INTEL_POSTGRES_USER` | `da_intel` | Database user |
+| `DA_INTEL_POSTGRES_PASSWORD` | `da_intel` | Database password |
+| `DA_INTEL_POSTGRES_DB` | `da_intel` | Database name |
 
 **Example**:
 ```bash
-export DA_AGENT_POSTGRES_HOST="postgres.example.com"
-export DA_AGENT_POSTGRES_PORT="5432"
-export DA_AGENT_POSTGRES_USER="da_agent"
-export DA_AGENT_POSTGRES_PASSWORD="secure_password"
-export DA_AGENT_POSTGRES_DB="da_agent"
+export DA_INTEL_POSTGRES_HOST="postgres.example.com"
+export DA_INTEL_POSTGRES_PORT="5432"
+export DA_INTEL_POSTGRES_USER="da_intel"
+export DA_INTEL_POSTGRES_PASSWORD="secure_password"
+export DA_INTEL_POSTGRES_DB="da_intel"
 ```
 
 **Connection String Format**:
@@ -53,19 +53,19 @@ postgres://{user}:{password}@{host}:{port}/{database}
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DA_AGENT_REDIS_HOST` | `127.0.0.1` | Redis hostname |
-| `DA_AGENT_REDIS_PORT` | `6379` | Redis port |
-| `DA_AGENT_REDIS_PASSWORD` | _(none)_ | Redis password (optional) |
-| `DA_AGENT_REDIS_DB` | `0` | Redis database number |
-| `DA_AGENT_CACHE_TTL` | `3600` | Cache TTL in seconds (1 hour) |
+| `DA_INTEL_REDIS_HOST` | `127.0.0.1` | Redis hostname |
+| `DA_INTEL_REDIS_PORT` | `6379` | Redis port |
+| `DA_INTEL_REDIS_PASSWORD` | _(none)_ | Redis password (optional) |
+| `DA_INTEL_REDIS_DB` | `0` | Redis database number |
+| `DA_INTEL_CACHE_TTL` | `3600` | Cache TTL in seconds (1 hour) |
 
 **Example**:
 ```bash
-export DA_AGENT_REDIS_HOST="redis.example.com"
-export DA_AGENT_REDIS_PORT="6379"
-export DA_AGENT_REDIS_PASSWORD="secure_redis_password"
-export DA_AGENT_REDIS_DB="0"
-export DA_AGENT_CACHE_TTL="7200"  # 2 hours
+export DA_INTEL_REDIS_HOST="redis.example.com"
+export DA_INTEL_REDIS_PORT="6379"
+export DA_INTEL_REDIS_PASSWORD="secure_redis_password"
+export DA_INTEL_REDIS_DB="0"
+export DA_INTEL_CACHE_TTL="7200"  # 2 hours
 ```
 
 **Redis URL Format** (internal):
@@ -149,7 +149,7 @@ export RUST_LOG="trustify_vulnerability_intel::service::vulnerability=trace"
 
 ## Config File
 
-Create a `config.yaml` file in the project root (or specify path via `DA_AGENT_CONFIG_PATH`).
+Create a `config.yaml` file in the project root (or specify path via `DA_INTEL_CONFIG_PATH`).
 
 ### Example config.yaml
 
@@ -228,16 +228,16 @@ HOST="0.0.0.0"
 PORT="8080"
 
 # Database (local PostgreSQL)
-DA_AGENT_POSTGRES_HOST="localhost"
-DA_AGENT_POSTGRES_PORT="5432"
-DA_AGENT_POSTGRES_USER="da_agent"
-DA_AGENT_POSTGRES_PASSWORD="da_agent"
-DA_AGENT_POSTGRES_DB="da_agent"
+DA_INTEL_POSTGRES_HOST="localhost"
+DA_INTEL_POSTGRES_PORT="5432"
+DA_INTEL_POSTGRES_USER="da_intel"
+DA_INTEL_POSTGRES_PASSWORD="da_intel"
+DA_INTEL_POSTGRES_DB="da_intel"
 
 # Cache (local Redis)
-DA_AGENT_REDIS_HOST="localhost"
-DA_AGENT_REDIS_PORT="6379"
-DA_AGENT_CACHE_TTL="3600"
+DA_INTEL_REDIS_HOST="localhost"
+DA_INTEL_REDIS_PORT="6379"
+DA_INTEL_CACHE_TTL="3600"
 
 # LLM
 OPENAI_API_KEY="sk-..."
@@ -295,8 +295,8 @@ type: Opaque
 stringData:
   OPENAI_API_KEY: "sk-..."
   GITHUB_TOKEN: "ghp_..."
-  DA_AGENT_POSTGRES_PASSWORD: "secure_password"
-  DA_AGENT_REDIS_PASSWORD: "secure_redis_password"
+  DA_INTEL_POSTGRES_PASSWORD: "secure_password"
+  DA_INTEL_REDIS_PASSWORD: "secure_redis_password"
 ```
 
 **Deployment**:
@@ -319,30 +319,30 @@ spec:
         - name: PORT
           value: "8080"
         # Database
-        - name: DA_AGENT_POSTGRES_HOST
+        - name: DA_INTEL_POSTGRES_HOST
           value: "postgres-service"
-        - name: DA_AGENT_POSTGRES_PORT
+        - name: DA_INTEL_POSTGRES_PORT
           value: "5432"
-        - name: DA_AGENT_POSTGRES_USER
-          value: "da_agent"
-        - name: DA_AGENT_POSTGRES_PASSWORD
+        - name: DA_INTEL_POSTGRES_USER
+          value: "da_intel"
+        - name: DA_INTEL_POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: trustify-vulnerability-intel-secrets
-              key: DA_AGENT_POSTGRES_PASSWORD
-        - name: DA_AGENT_POSTGRES_DB
-          value: "da_agent"
+              key: DA_INTEL_POSTGRES_PASSWORD
+        - name: DA_INTEL_POSTGRES_DB
+          value: "da_intel"
         # Redis
-        - name: DA_AGENT_REDIS_HOST
+        - name: DA_INTEL_REDIS_HOST
           value: "redis-service"
-        - name: DA_AGENT_REDIS_PORT
+        - name: DA_INTEL_REDIS_PORT
           value: "6379"
-        - name: DA_AGENT_REDIS_PASSWORD
+        - name: DA_INTEL_REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               name: trustify-vulnerability-intel-secrets
-              key: DA_AGENT_REDIS_PASSWORD
-        - name: DA_AGENT_CACHE_TTL
+              key: DA_INTEL_REDIS_PASSWORD
+        - name: DA_INTEL_CACHE_TTL
           value: "7200"  # 2 hours in production
         # LLM
         - name: OPENAI_API_KEY
@@ -377,13 +377,13 @@ spec:
 
 ```bash
 # Verify environment variables are set
-env | grep DA_AGENT
+env | grep DA_INTEL
 
 # Test database connection
-psql -h $DA_AGENT_POSTGRES_HOST -U $DA_AGENT_POSTGRES_USER -d $DA_AGENT_POSTGRES_DB -c "SELECT 1"
+psql -h $DA_INTEL_POSTGRES_HOST -U $DA_INTEL_POSTGRES_USER -d $DA_INTEL_POSTGRES_DB -c "SELECT 1"
 
 # Test Redis connection
-redis-cli -h $DA_AGENT_REDIS_HOST -p $DA_AGENT_REDIS_PORT PING
+redis-cli -h $DA_INTEL_REDIS_HOST -p $DA_INTEL_REDIS_PORT PING
 
 # Test OpenAI API key
 curl https://api.openai.com/v1/models \
@@ -419,9 +419,9 @@ Error: Failed to create database pool
 ```
 
 **Solutions**:
-1. Check PostgreSQL is running: `pg_isready -h $DA_AGENT_POSTGRES_HOST`
+1. Check PostgreSQL is running: `pg_isready -h $DA_INTEL_POSTGRES_HOST`
 2. Verify credentials are correct
-3. Check network connectivity: `telnet $DA_AGENT_POSTGRES_HOST 5432`
+3. Check network connectivity: `telnet $DA_INTEL_POSTGRES_HOST 5432`
 4. Check database exists: `psql -l`
 
 ### Redis Connection Issues
@@ -434,7 +434,7 @@ WARN: Redis cache unavailable, running without cache
 **Solutions**:
 - This is non-critical - the service will run without Redis
 - To enable Redis: check Redis is running and credentials are correct
-- Test connection: `redis-cli -h $DA_AGENT_REDIS_HOST PING`
+- Test connection: `redis-cli -h $DA_INTEL_REDIS_HOST PING`
 
 ### LLM API Issues
 
@@ -517,8 +517,8 @@ WARN: Rate limited while retrieving document, skipping
 1. **Never commit secrets** to version control
 2. **Use environment variables** or secrets management for:
    - `OPENAI_API_KEY`
-   - `DA_AGENT_POSTGRES_PASSWORD`
-   - `DA_AGENT_REDIS_PASSWORD`
+   - `DA_INTEL_POSTGRES_PASSWORD`
+   - `DA_INTEL_REDIS_PASSWORD`
    - `GITHUB_TOKEN`
 3. **Configure URL filtering** to prevent SSRF:
    - Whitelist trusted domains
@@ -546,9 +546,9 @@ server:
 database:
   host: "localhost"
   port: 5432
-  user: "da_agent"
-  password: "${DA_AGENT_POSTGRES_PASSWORD}"
-  database: "da_agent"
+  user: "da_intel"
+  password: "${DA_INTEL_POSTGRES_PASSWORD}"
+  database: "da_intel"
 
 cache:
   host: "localhost"

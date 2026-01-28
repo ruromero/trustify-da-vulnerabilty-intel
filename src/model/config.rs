@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use url::Url;
 
-const ENV_CONFIG_PATH: &str = "DA_AGENT_CONFIG_PATH";
+const ENV_CONFIG_PATH: &str = "DA_INTEL_CONFIG_PATH";
 const DEFAULT_CONFIG_PATH: &str = "config.yaml";
 
 /// Retriever filtering configuration
