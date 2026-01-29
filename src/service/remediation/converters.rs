@@ -51,7 +51,7 @@ fn convert_instruction(extracted: ExtractedInstruction) -> RemediationInstructio
         parameters: extracted
             .parameters
             .into_iter()
-            .map(|entry| (entry.key, entry.value))
+            .map(|entry| (entry.key, serde_json::Value::String(entry.value)))
             .collect(),
     }
 }

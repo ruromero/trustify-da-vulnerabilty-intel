@@ -37,11 +37,14 @@ pub struct ExtractedRemediationAction {
     pub reasoning: Option<String>,
 }
 
-/// Key-value pair for parameters (used to avoid additionalProperties requirement from OpenAI)
+/// Key-value pair for parameters (used to avoid additionalProperties requirement from OpenAI).
+/// Values are strings so the generated JSON Schema is valid for OpenAI function calling.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ParameterEntry {
+    #[schemars(description = "Parameter name (e.g., package_name, version)")]
     pub key: String,
-    pub value: serde_json::Value,
+    #[schemars(description = "Parameter value as string (e.g., package name, version number)")]
+    pub value: String,
 }
 
 /// LLM-extracted instruction structure

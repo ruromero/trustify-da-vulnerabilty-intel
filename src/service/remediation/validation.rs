@@ -74,11 +74,11 @@ pub fn validate_extracted_remediation(
 
             for instr in &dependency_instructions {
                 if let Some(version_entry) = instr.parameters.iter().find(|e| e.key == "version")
-                    && let Some(version_str) = version_entry.value.as_str()
-                        && version_str == recommended_version {
-                            found_recommended_version = true;
-                            break;
-                        }
+                    && version_entry.value == recommended_version
+                {
+                    found_recommended_version = true;
+                    break;
+                }
             }
 
             if !found_recommended_version {
@@ -224,8 +224,7 @@ pub fn validate_extracted_remediation(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::remediations::action_extraction::ExtractedInstruction;
-    use std::collections::HashMap;
+    use crate::model::remediations::action_extraction::{ExtractedInstruction, ParameterEntry};
 
     #[test]
     fn test_valid_remediation() {
@@ -233,15 +232,16 @@ mod tests {
             instructions: vec![ExtractedInstruction {
                 domain: "dependency".to_string(),
                 action: "Upgrade package to version 2.0.0".to_string(),
-                parameters: {
-                    let mut map = HashMap::new();
-                    map.insert(
-                        "package_name".to_string(),
-                        serde_json::json!("example-package"),
-                    );
-                    map.insert("version".to_string(), serde_json::json!("2.0.0"));
-                    map
-                },
+                parameters: vec![
+                    ParameterEntry {
+                        key: "package_name".to_string(),
+                        value: "example-package".to_string(),
+                    },
+                    ParameterEntry {
+                        key: "version".to_string(),
+                        value: "2.0.0".to_string(),
+                    },
+                ],
             }],
             preconditions: vec!["Create backup of current deployment".to_string()],
             expected_outcomes: vec!["Vulnerability CVE-2024-1234 is patched".to_string()],
@@ -283,11 +283,10 @@ mod tests {
             instructions: vec![ExtractedInstruction {
                 domain: "dependency".to_string(),
                 action: "Upgrade to version 3.0.0".to_string(),
-                parameters: {
-                    let mut map = HashMap::new();
-                    map.insert("version".to_string(), serde_json::json!("3.0.0"));
-                    map
-                },
+                parameters: vec![ParameterEntry {
+                    key: "version".to_string(),
+                    value: "3.0.0".to_string(),
+                }],
             }],
             preconditions: vec![],
             expected_outcomes: vec!["Patched".to_string()],
