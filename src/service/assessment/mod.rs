@@ -13,11 +13,17 @@ use crate::service::assessment::converters::{
 use crate::service::assessment::prompts::{ASSESSMENT_SYSTEM_PROMPT, build_assessment_prompt};
 use crate::service::llm::LlmClient;
 
-/// Environment variable for assessment model (defaults to GPT-4O if not set)
+/// Environment variable for assessment model (defaults to gpt-4o if not set)
 const ENV_ASSESSMENT_MODEL: &str = "ASSESSMENT_MODEL";
 
-/// Default model for vulnerability assessment (can be different from claim extraction)
-const DEFAULT_MODEL: &str = openai::GPT_4O_MINI;
+/// Environment variable for confidence reason model (defaults to gpt-4o-mini for cost/speed)
+const ENV_CONFIDENCE_MODEL: &str = "CONFIDENCE_MODEL";
+
+/// Default model for vulnerability assessment (gpt-4o for better reasoning over claims)
+const DEFAULT_MODEL: &str = openai::GPT_4O;
+
+/// Default model for confidence reason (gpt-4o-mini is sufficient for short explanations)
+const DEFAULT_CONFIDENCE_MODEL: &str = openai::GPT_4O_MINI;
 
 pub mod confidence;
 pub mod converters;
@@ -31,24 +37,32 @@ pub use error::AssessmentError;
 pub struct VulnerabilityAssessmentService {
     llm_client: LlmClient,
     model: String,
+    confidence_model: String,
 }
 
 impl VulnerabilityAssessmentService {
     /// Creates a new assessment service
     ///
     /// Uses a shared LLM client passed from startup.
-    /// Optionally uses ASSESSMENT_MODEL env var (defaults to gpt-4o-mini)
+    /// Optionally uses ASSESSMENT_MODEL env var (defaults to gpt-4o).
+    /// Confidence reason uses CONFIDENCE_MODEL (defaults to gpt-4o-mini).
     pub fn new(llm_client: LlmClient) -> Self {
-        // Allow different model for assessment vs claim extraction
         let model =
             std::env::var(ENV_ASSESSMENT_MODEL).unwrap_or_else(|_| DEFAULT_MODEL.to_string());
+        let confidence_model = std::env::var(ENV_CONFIDENCE_MODEL)
+            .unwrap_or_else(|_| DEFAULT_CONFIDENCE_MODEL.to_string());
 
         tracing::info!(
             model = %model,
+            confidence_model = %confidence_model,
             "Vulnerability assessment service initialized"
         );
 
-        Self { llm_client, model }
+        Self {
+            llm_client,
+            model,
+            confidence_model,
+        }
     }
 
     /// Assess exploitability, impact, and limitations from claims and static data
@@ -160,7 +174,7 @@ impl VulnerabilityAssessmentService {
     ) -> crate::model::OverallConfidence {
         compute_confidence(
             &self.llm_client,
-            &self.model,
+            &self.confidence_model,
             intel,
             exploitability,
             limitations,

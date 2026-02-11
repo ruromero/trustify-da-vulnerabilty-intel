@@ -2,13 +2,15 @@
 //!
 //! Generates remediation plans based on vulnerability assessments.
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::model::remediations::action_extraction::ExtractedRemediationAction;
 use crate::model::{
-    ApplicabilityResult, ApplicabilityStatus, ClaimCertainty, PackageIdentity, RemediationCategory,
-    RemediationKind, RemediationOption, RemediationPlan, RemediationPlanRequest, RemediationStatus,
-    Scope, SourceClaimReason, VulnerabilityAssessment,
+    ApplicabilityResult, ApplicabilityStatus, ClaimCertainty, FixedRange, InstructionDomain,
+    PackageIdentity, RemediationAction, RemediationCategory, RemediationInstruction, RemediationKind,
+    RemediationOption, RemediationPlan, RemediationPlanRequest, RangeType, Scope, SourceClaimReason,
+    VulnerabilityAssessment,
 };
 use crate::service::cache::VulnerabilityCache;
 use crate::service::cache_keys::generate_assessment_cache_key;
@@ -26,11 +28,11 @@ use converters::convert_to_remediation_action;
 use prompts::{ACTION_GENERATION_SYSTEM_PROMPT, build_action_prompt};
 use version::select_optimal_fixed_version;
 
-/// Environment variable for remediation model (defaults to GPT-4O if not set)
+/// Environment variable for remediation model (defaults to gpt-4o if not set)
 const ENV_REMEDIATION_MODEL: &str = "REMEDIATION_MODEL";
 
-/// Default model for remediation action generation
-const DEFAULT_REMEDIATION_MODEL: &str = rig::providers::openai::GPT_4O_MINI;
+/// Default model for remediation action generation (gpt-4o for better schema adherence and instructions)
+const DEFAULT_REMEDIATION_MODEL: &str = rig::providers::openai::GPT_4O;
 
 /// Service for generating remediation plans
 pub struct RemediationService {
@@ -154,7 +156,32 @@ impl RemediationService {
             .collect();
 
         // Step 3.3: Classify actions into safe_defaults vs actions
-        let (safe_defaults, actions) = self.classify_actions(all_actions);
+        let (mut safe_defaults, actions) = self.classify_actions(all_actions);
+
+        // When trusted_content (purl) is provided, add it as a vendor remediation in safe_defaults
+        // so the plan explicitly includes the vendor-provided remediated package.
+        if let Some(ref purl) = request.trusted_content {
+            let vendor_remediation_action = RemediationAction {
+                kind: RemediationKind::PatchUpgrade,
+                description: format!(
+                    "Vendor provided remediation: use {}",
+                    purl.as_str()
+                ),
+                language: None,
+                instructions: vec![RemediationInstruction {
+                    domain: InstructionDomain::Dependency,
+                    action: format!("Use vendor-provided remediated package: {}", purl.as_str()),
+                    parameters: HashMap::from([(
+                        "purl".to_string(),
+                        serde_json::Value::String(purl.as_str().to_string()),
+                    )]),
+                }],
+                preconditions: vec![],
+                confirmation_risks: vec![],
+                expected_outcomes: vec!["Vulnerability addressed by vendor-provided remediated package".to_string()],
+            };
+            safe_defaults.insert(0, vendor_remediation_action);
+        }
 
         // Step 4: Plan Assembly
         let mut confirmation_risks = vec![applicability.justification];
@@ -245,23 +272,7 @@ impl RemediationService {
             return None;
         }
 
-        let fixed_versions_str = intel
-            .fixed_versions
-            .iter()
-            .filter_map(|r| r.fixed.as_ref())
-            .map(|v| v.as_str())
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        let description = if fixed_versions_str.is_empty() {
-            "PatchUpgrade (High confidence, vendor advisory): Fixed versions available for upgrade"
-                .to_string()
-        } else {
-            format!(
-                "PatchUpgrade (High confidence, vendor advisory): Upgrade to fixed version(s): {}",
-                fixed_versions_str
-            )
-        };
+        let description = Self::patch_upgrade_description(&intel.fixed_versions);
 
         Some(RemediationOption {
             kind: RemediationKind::PatchUpgrade,
@@ -269,6 +280,48 @@ impl RemediationService {
             migration_guide: None,
             certainty: ClaimCertainty::Strong,
         })
+    }
+
+    /// Build patch upgrade option description. When fixed_versions are git-only (commit hashes),
+    /// describe using advisory/release so agents do not treat the commit as a package version.
+    fn patch_upgrade_description(fixed_versions: &[FixedRange]) -> String {
+        let fixed_versions_str: String = fixed_versions
+            .iter()
+            .filter_map(|r| r.fixed.as_ref())
+            .map(|v| v.as_str())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        if fixed_versions_str.is_empty() {
+            return "PatchUpgrade (High confidence, vendor advisory): Fixed versions available for upgrade"
+                .to_string();
+        }
+
+        let git_only = fixed_versions
+            .iter()
+            .all(|r| matches!(r.range_type, RangeType::Git));
+        let any_looks_like_commit = fixed_versions
+            .iter()
+            .filter_map(|r| r.fixed.as_deref())
+            .any(prompts::looks_like_commit_hash);
+
+        if git_only || any_looks_like_commit {
+            // Don't present commit as "version" — agents would wrongly use it for npm/pip etc.
+            let short_ref = if fixed_versions_str.len() > 12 {
+                format!("{}…", &fixed_versions_str[..12])
+            } else {
+                fixed_versions_str.clone()
+            };
+            format!(
+                "PatchUpgrade (High confidence, vendor advisory): Fix available in upstream (commit {}). Use the package release that includes this fix — see advisory or release notes for the version number.",
+                short_ref
+            )
+        } else {
+            format!(
+                "PatchUpgrade (High confidence, vendor advisory): Upgrade to fixed version(s): {}",
+                fixed_versions_str
+            )
+        }
     }
 
     /// Check if CodeChange option is applicable
@@ -460,12 +513,8 @@ impl RemediationService {
         request: &RemediationPlanRequest,
         _intel: &crate::model::VulnerabilityIntel,
     ) -> Option<RemediationOption> {
-        // Check trusted content (customer)
-        let customer_says_not_affected = request
-            .trusted_content
-            .as_ref()
-            .map(|t| matches!(t.status, RemediationStatus::NotAffected))
-            .unwrap_or(false);
+        // Check trusted content (customer): presence of purl means Fixed or NotAffected
+        let customer_says_not_affected = request.trusted_content.is_some();
 
         // Check vendor remediations for NotAffected indication
         // Note: Vendor remediations don't directly say "NotAffected", but we can infer
@@ -721,10 +770,18 @@ impl RemediationService {
     fn is_safe_default(&self, action: &crate::model::RemediationAction) -> bool {
         match action.kind {
             RemediationKind::PatchUpgrade => {
-                // Check if it's a patch upgrade within same minor version
-                // This is a simplified check - in production, you'd parse versions properly
-                action.description.to_lowercase().contains("patch")
-                    || action.description.to_lowercase().contains("minor")
+                // Only treat as safe when description explicitly indicates patch/minor (same-major) upgrade.
+                // Do not match the word "patch" in "PatchUpgrade" - require e.g. "patch version" or "minor version"
+                // so that major upgrades (e.g. 6.x -> 7.x) are not classified as safe_default.
+                let d = action.description.to_lowercase();
+                d.contains("patch version")
+                    || d.contains("minor version")
+                    || d.contains("patch release")
+                    || d.contains("minor release")
+            }
+            RemediationKind::CodeChange => {
+                // Code remediations (workarounds, config) are typically lower risk than major upgrades
+                true
             }
             RemediationKind::IgnoreFalsePositive => {
                 // Suppress false positive with justification is safe

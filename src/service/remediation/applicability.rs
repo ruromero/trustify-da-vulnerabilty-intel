@@ -8,8 +8,8 @@
 
 use crate::model::{
     ApplicabilityResult, ApplicabilitySourceType, ApplicabilityStatus, PackageIdentity,
-    RemediationCategory, RemediationConfidenceLevel, RemediationPlanRequest, RemediationStatus,
-    VendorRemediation, VulnerabilityAssessment, VulnerabilityIntel,
+    RemediationCategory, RemediationConfidenceLevel, RemediationPlanRequest, VendorRemediation,
+    VulnerabilityAssessment, VulnerabilityIntel,
 };
 use crate::service::remediation::version::{version_in_fixed_range, version_in_range};
 
@@ -41,48 +41,19 @@ pub fn determine_applicability(
 }
 
 /// Check trusted content (Priority 1)
+/// When a purl is provided, it is expected to indicate Fixed or NotAffected; justification is not used.
 fn check_trusted_content(request: &RemediationPlanRequest) -> Option<ApplicabilityResult> {
-    let trusted = request.trusted_content.as_ref()?;
+    let purl = request.trusted_content.as_ref()?;
 
-    if !matches!(
-        trusted.status,
-        RemediationStatus::NotAffected | RemediationStatus::Fixed
-    ) {
-        return None;
-    }
-
-    let customer_justification = trusted
-        .justification
-        .as_deref()
-        .unwrap_or("no justification provided");
-
-    // Make explicit distinction between "never vulnerable" and "already fixed"
-    let justification = match trusted.status {
-        RemediationStatus::NotAffected => {
-            format!(
-                "Not affected: vulnerable code not present. Customer indicates: {} (purl: {})",
-                customer_justification, trusted.purl
-            )
-        }
-        RemediationStatus::Fixed => {
-            format!(
-                "Already fixed: vulnerability was present but has been remediated. Customer indicates: {} (purl: {})",
-                customer_justification, trusted.purl
-            )
-        }
-        _ => unreachable!(), // Already filtered by matches! above
-    };
+    let justification = "Vendor provided remediation".to_string();
 
     tracing::info!(
         cve = %request.cve,
-        purl = %trusted.purl,
-        status = ?trusted.status,
-        "Applicability determined from trusted content"
+        purl = %purl,
+        "Applicability determined from trusted content (purl)"
     );
 
-    // Both Fixed and NotAffected mean the vulnerability is not required to be remediated:
-    // - NotAffected: Package was never vulnerable (not required to be remediated)
-    // - Fixed: Package was vulnerable but is now fixed (no longer required to be remediated)
+    // Presence of trusted purl means not required to be remediated (Fixed or NotAffected)
     let requires_action = ApplicabilityStatus::NotApplicable;
 
     Some(ApplicabilityResult {

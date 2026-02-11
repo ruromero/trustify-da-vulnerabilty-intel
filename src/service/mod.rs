@@ -2,6 +2,7 @@ pub mod assessment;
 pub mod cache;
 mod cache_keys;
 pub mod claims;
+mod reference_selector;
 pub mod depsdev;
 pub mod document;
 pub mod llm;

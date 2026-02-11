@@ -445,26 +445,7 @@ pub struct VulnerabilityAssessmentResponse {
 pub struct RemediationPlanRequest {
     pub cve: String,
     pub package: PackageIdentity,
-    pub trusted_content: Option<TrustedRemediation>,
-}
-
-// Describes the trusted content remediation for a specific package and CVE.
-// This information will be provided by the customer and will be used to assess the vulnerability.
-// Theoretically, this information will be retrieved from Trustify /recommend endpoint.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct TrustedRemediation {
-    pub purl: Url,
-    pub status: RemediationStatus,
-    pub justification: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum RemediationStatus {
-    NotAffected,
-    Affected,
-    Fixed,
-    UnderInvestigation,
+    pub trusted_content: Option<Url>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

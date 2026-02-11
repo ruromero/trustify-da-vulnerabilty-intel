@@ -1,6 +1,6 @@
 //! Prompts for remediation action generation
 
-use crate::model::{RemediationOption, VulnerabilityIntel};
+use crate::model::{FixedRange, RangeType, RemediationOption, VulnerabilityIntel};
 
 /// System prompt for remediation action generation
 pub const ACTION_GENERATION_SYSTEM_PROMPT: &str = r#"You are a security remediation expert. Your task is to generate detailed, actionable remediation instructions based on a vulnerability assessment and a selected remediation option.
@@ -13,12 +13,21 @@ CRITICAL RULES:
 5. Be specific about parameters, versions, and configurations.
 6. Consider the package ecosystem and language when generating instructions.
 7. Do not introduce remediation steps that are not implied by the selected remediation option.
-8. When generating dependency instructions, always select a specific fixed version from Fixed Versions.
-  If multiple fixed versions exist, prefer:
-    - Lowest fixed version greater than the affected range
-    - Stable (non-pre-release) versions
+8. When generating dependency instructions, use a **package version number** (e.g. 1.2.3 for semver).
+  If Fixed Versions list a git commit hash, do NOT use the commit as the version parameter.
+  Instead, instruct to upgrade to the release that contains that fix (use version from claims/advisory if present).
+  If multiple fixed versions exist, prefer the lowest stable version greater than the affected range.
 
 Your output must be structured and actionable."#;
+
+/// Returns true if the string looks like a git commit hash (e.g. 40 or 7+ hex chars).
+pub fn looks_like_commit_hash(s: &str) -> bool {
+    let s = s.trim();
+    (s.len() == 40 || s.len() >= 7)
+        && s.chars()
+            .all(|c| c.is_ascii_hexdigit())
+    // Short refs are often 7–12 chars
+}
 
 /// Build prompt for generating a remediation action from an option
 pub fn build_action_prompt(
@@ -263,10 +272,33 @@ Remember: Focus on HOW to implement, not whether it's applicable."#,
         claims_summary,
         format_versions(&intel.affected_versions),
         format_versions_fixed(&intel.fixed_versions),
-        optimal_fixed_version
-            .map(|v| format!("Use version: {}", v))
-            .unwrap_or_else(|| "See Fixed Versions above".to_string()),
+        recommended_fixed_version_line(optimal_fixed_version, &intel.fixed_versions),
     )
+}
+
+/// Recommended fixed version line for the prompt. When the value is a git commit, instruct
+/// the LLM to use a package version from advisory/claims, not the commit hash.
+fn recommended_fixed_version_line(
+    optimal_fixed_version: Option<&str>,
+    fixed_versions: &[FixedRange],
+) -> String {
+    let Some(v) = optimal_fixed_version else {
+        return "See Fixed Versions above.".to_string();
+    };
+    let is_git_fix = fixed_versions
+        .iter()
+        .any(|r| r.fixed.as_deref() == Some(v) && matches!(r.range_type, RangeType::Git));
+    let is_commit_like = looks_like_commit_hash(v);
+
+    if is_git_fix || is_commit_like {
+        format!(
+            "Fix is identified by git commit {} — do NOT use this as the package version. \
+             Use the package RELEASE VERSION that contains this fix (e.g. from claims or advisory above).",
+            if v.len() > 12 { format!("{}…", &v[..12]) } else { v.to_string() }
+        )
+    } else {
+        format!("Use version: {}", v)
+    }
 }
 
 fn format_versions(ranges: &[crate::model::AffectedRange]) -> String {
@@ -304,5 +336,34 @@ fn format_versions_fixed(ranges: &[crate::model::FixedRange]) -> String {
             })
             .collect::<Vec<_>>()
             .join("\n")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::FixedRange;
+
+    #[test]
+    fn test_looks_like_commit_hash() {
+        assert!(looks_like_commit_hash("911c886bb170a6ee3db05fd3709221752213ec8a"));
+        assert!(looks_like_commit_hash("911c886"));
+        assert!(!looks_like_commit_hash("1.2.3"));
+        assert!(!looks_like_commit_hash("7.5.4"));
+    }
+
+    #[test]
+    fn test_recommended_fixed_version_line_commit() {
+        let fixed = vec![FixedRange {
+            range_type: RangeType::Git,
+            fixed: Some("911c886bb170a6ee3db05fd3709221752213ec8a".to_string()),
+            raw: None,
+        }];
+        let line = recommended_fixed_version_line(
+            Some("911c886bb170a6ee3db05fd3709221752213ec8a"),
+            &fixed,
+        );
+        assert!(line.contains("do NOT use"), "{}", line);
+        assert!(line.contains("RELEASE VERSION"), "{}", line);
     }
 }

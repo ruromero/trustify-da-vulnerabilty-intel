@@ -3,7 +3,8 @@
 use sha2::{Digest, Sha256};
 use serde::Serialize;
 
-use crate::model::{PackageIdentity, VulnerabilityIntel, TrustedRemediation};
+use crate::model::{PackageIdentity, VulnerabilityIntel};
+use url::Url;
 use crate::service::assessment::prompts::{ASSESSMENT_SYSTEM_PROMPT, build_assessment_prompt};
 use crate::service::remediation::prompts::ACTION_GENERATION_SYSTEM_PROMPT;
 
@@ -58,19 +59,19 @@ pub fn generate_assessment_cache_key(
 /// Generate cache key hash for remediation plan
 /// 
 /// The key is based on:
-/// - trusted_content hash
+/// - trusted_content (purl) hash
 /// - package identity
 /// - model
 /// - vulnerability_assessment cache key
 pub fn generate_remediation_cache_key(
-    trusted_content: Option<&TrustedRemediation>,
+    trusted_content: Option<&Url>,
     package: &PackageIdentity,
     model_id: &str,
     assessment_cache_key: &str,
 ) -> String {
-    // Hash trusted content if present
-    let trusted_content_hash = if let Some(tc) = trusted_content {
-        hash_serializable(tc)
+    // Hash trusted content (purl) if present
+    let trusted_content_hash = if let Some(purl) = trusted_content {
+        hash_string(purl.as_str())
     } else {
         "none".to_string()
     };

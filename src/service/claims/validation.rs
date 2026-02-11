@@ -118,8 +118,12 @@ pub fn validate_extracted_claims(
                 let normalized_doc = normalize_whitespace(document_content);
 
                 if !normalized_doc.contains(&normalized_excerpt) {
-                    // Try a partial match (at least 70% of the excerpt should be present)
-                    if !is_substantially_present(&normalized_excerpt, &normalized_doc) {
+                    // Try contiguous substring match (70% of excerpt chars)
+                    let contiguous_ok = is_substantially_present(&normalized_excerpt, &normalized_doc);
+                    // Fallback: at least 70% of excerpt words appear in document in order (handles LLM paraphrasing/punctuation)
+                    let words_ok =
+                        words_in_order_present(excerpt, document_content, WORD_SUBSEQUENCE_RATIO);
+                    if !contiguous_ok && !words_ok {
                         result.add_error(format!(
                             "Claim {} excerpt not found in document: '{}'",
                             i + 1,
@@ -187,9 +191,14 @@ fn normalize_whitespace(text: &str) -> String {
     text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// Check if a substantial portion of the excerpt is present in the document
+/// Normalize a word for comparison (lowercase, strip leading/trailing punctuation)
+fn normalize_word(w: &str) -> String {
+    w.trim_matches(|c: char| c.is_ascii_punctuation())
+        .to_lowercase()
+}
+
+/// Check if a substantial portion of the excerpt is present in the document (contiguous substring)
 fn is_substantially_present(excerpt: &str, document: &str) -> bool {
-    // Split into words and check if at least 70% are present in order
     let excerpt_words: Vec<&str> = excerpt.split_whitespace().collect();
     if excerpt_words.is_empty() {
         return false;
@@ -203,7 +212,7 @@ fn is_substantially_present(excerpt: &str, document: &str) -> bool {
 
     // Check for substrings of the excerpt
     for window_size in (threshold..=excerpt_lower.len()).rev() {
-        for start in 0..=(excerpt_lower.len() - window_size) {
+        for start in 0..=(excerpt_lower.len().saturating_sub(window_size)) {
             let substring = &excerpt_lower[start..start + window_size];
             if doc_lower.contains(substring) {
                 return true;
@@ -212,6 +221,44 @@ fn is_substantially_present(excerpt: &str, document: &str) -> bool {
     }
 
     false
+}
+
+/// Check if at least `min_ratio` of excerpt words appear in the document in order (subsequence).
+/// Handles LLM paraphrasing and punctuation differences (e.g. "7.5" vs "7.5,").
+const WORD_SUBSEQUENCE_RATIO: f32 = 0.70;
+
+fn words_in_order_present(excerpt: &str, document: &str, min_ratio: f32) -> bool {
+    let excerpt_words: Vec<String> = excerpt
+        .split_whitespace()
+        .map(normalize_word)
+        .filter(|w| !w.is_empty())
+        .collect();
+    if excerpt_words.is_empty() {
+        return false;
+    }
+
+    let doc_words: Vec<String> = document
+        .split_whitespace()
+        .map(normalize_word)
+        .filter(|w| !w.is_empty())
+        .collect();
+
+    // Find longest subsequence of excerpt words that appears in doc in order
+    let mut doc_idx = 0;
+    let mut matched = 0;
+    for ew in &excerpt_words {
+        while doc_idx < doc_words.len() {
+            if doc_words[doc_idx] == *ew {
+                matched += 1;
+                doc_idx += 1;
+                break;
+            }
+            doc_idx += 1;
+        }
+    }
+
+    let ratio = matched as f32 / excerpt_words.len() as f32;
+    ratio >= min_ratio
 }
 
 #[cfg(test)]
@@ -255,6 +302,29 @@ mod tests {
 
         assert!(!result.is_valid);
         assert!(!result.errors.is_empty());
+    }
+
+    /// Excerpt that paraphrases slightly (same words in order, different punctuation/wording)
+    /// should pass via word-subsequence fallback.
+    #[test]
+    fn test_excerpt_paraphrase_passes_word_subsequence() {
+        let claims = ExtractedClaims {
+            claims: vec![ExtractedClaim {
+                reason: ExtractedReason::Exploitability,
+                certainty: ExtractedCertainty::Strong,
+                excerpt: Some(
+                    "CVE-2020-36518 allows SQL injection in the CNC Console (jackson-databind) which can be exploited over the network."
+                        .to_string(),
+                ),
+                rationale: "The vulnerability enables SQL injection over the network.".to_string(),
+            }],
+        };
+
+        // Document has same meaning, slightly different wording/punctuation (e.g. "7.5" vs "score of 7.5")
+        let document = "CVE-2020-36518 allows SQL injection in the CNC Console (jackson-databind) which can be exploited over the network. CVE-2020-36518 is associated with a CVSS score of 7.5.";
+        let result = validate_extracted_claims(&claims, document);
+
+        assert!(result.is_valid, "paraphrased excerpt should pass: {:?}", result.errors);
     }
 
     #[test]

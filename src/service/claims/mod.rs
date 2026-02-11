@@ -25,8 +25,11 @@ pub mod validation;
 
 pub use error::ClaimExtractionError;
 
-/// Default model to use for extraction
-const DEFAULT_MODEL: &str = openai::GPT_4O_MINI;
+/// Environment variable for claim extraction model (defaults to gpt-4o if not set)
+const ENV_CLAIM_EXTRACTION_MODEL: &str = "CLAIM_EXTRACTION_MODEL";
+
+/// Default model for claim extraction (gpt-4o for better verbatim excerpts and long-context grounding)
+const DEFAULT_MODEL: &str = openai::GPT_4O;
 
 /// Service for extracting claims from reference documents
 pub struct ClaimExtractionService {
@@ -38,17 +41,24 @@ pub struct ClaimExtractionService {
 
 impl ClaimExtractionService {
     /// Create a new claim extraction service
-    /// Uses a shared LLM client passed from startup
+    /// Uses a shared LLM client passed from startup.
+    /// Optionally uses CLAIM_EXTRACTION_MODEL env var (defaults to gpt-4o).
     pub fn new(
         llm_client: LlmClient,
         document_service: Arc<DocumentService>,
         cache: Option<VulnerabilityCache>,
     ) -> Self {
+        let model = std::env::var(ENV_CLAIM_EXTRACTION_MODEL)
+            .unwrap_or_else(|_| DEFAULT_MODEL.to_string());
+        tracing::info!(
+            model = %model,
+            "Claim extraction service initialized"
+        );
         Self {
             llm_client,
             document_service,
             cache,
-            model: DEFAULT_MODEL.to_string(),
+            model,
         }
     }
 
